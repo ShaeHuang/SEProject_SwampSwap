@@ -24,3 +24,7 @@ Community-driven: Built specifically for international student needs
 # Vision
 
 SwampSwap aims to become the default second-hand trading hub for international students, starting on a single campus and expanding to multiple universities. By centralizing supply and demand, the platform reduces waste, saves money, and builds a more sustainable and connected student community.
+
+# Group Members
+Backend: Aidan Winney、Kabeer Latane
+Frontend：Xiangyu Zhou、 Xueni Huang
