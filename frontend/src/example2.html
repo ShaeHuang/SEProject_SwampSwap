@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browse Listings | GatorExchange</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style type="text/tailwindcss">
+      /* --- REUSING YOUR PREVIOUS CSS --- */
+      @import "tailwindcss";
+
+      @custom-variant dark (&:is(.dark *));
+
+      :root {
+        /* Backgrounds */
+        --background: oklch(
+          0.985 0.001 264.542
+        ); /* Slightly off-white for main bg to separate cards */
+        --foreground: oklch(0.129 0.042 264.695);
+
+        /* Component Backgrounds */
+        --card: oklch(1 0 0); /* Pure White */
+        --card-foreground: oklch(0.129 0.042 264.695);
+
+        /* UF Colors */
+        --primary: oklch(0.424 0.199 265.638); /* UF Blue */
+        --primary-foreground: oklch(0.985 0 0);
+        --secondary: oklch(0.705 0.213 47.604); /* UF Orange */
+        --secondary-foreground: oklch(0.141 0.005 285.823);
+
+        /* UI Colors */
+        --muted: oklch(0.961 0.006 264.542);
+        --muted-foreground: oklch(0.552 0.021 264.376);
+        --accent: oklch(0.94 0.01 264.542);
+        --accent-foreground: oklch(0.424 0.199 265.638);
+        --destructive: oklch(0.577 0.245 27.325);
+        --border: oklch(0.897 0.01 264.542);
+        --input: oklch(0.897 0.01 264.542);
+        --ring: oklch(0.424 0.199 265.638);
+        --radius: 0.5rem;
+      }
+
+      @theme inline {
+        --color-background: var(--background);
+        --color-foreground: var(--foreground);
+        --color-card: var(--card);
+        --color-card-foreground: var(--card-foreground);
+        --color-primary: var(--primary);
+        --color-primary-foreground: var(--primary-foreground);
+        --color-secondary: var(--secondary);
+        --color-secondary-foreground: var(--secondary-foreground);
+        --color-muted: var(--muted);
+        --color-muted-foreground: var(--muted-foreground);
+        --color-accent: var(--accent);
+        --color-accent-foreground: var(--accent-foreground);
+        --color-border: var(--border);
+        --color-input: var(--input);
+        --color-ring: var(--ring);
+        --radius-md: var(--radius);
+      }
+
+      @layer base {
+        body {
+          background-color: var(--background);
+          color: var(--foreground);
+          font-family: ui-sans-serif, system-ui, sans-serif;
+        }
+      }
+
+      /* --- COMPONENT UTILITIES --- */
+      .container-custom {
+        width: 100%;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        max-width: 1400px;
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        height: 2.25rem; /* Smaller for list views */
+        padding: 0 0.75rem;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+      .btn-secondary {
+        background: var(--secondary);
+        color: var(--secondary-foreground);
+      }
+      .btn-outline {
+        border: 1px solid var(--border);
+        background: transparent;
+      }
+      .btn-outline:hover {
+        background: var(--muted);
+      }
+      .btn-ghost {
+        background: transparent;
+      }
+      .btn-ghost:hover {
+        background: var(--muted);
+      }
+      .btn-icon {
+        padding: 0;
+        width: 2.25rem;
+      }
+
+      /* Badges */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 9999px;
+        padding: 0.125rem 0.625rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+      }
+      .badge-new {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+      } /* Green */
+      .badge-good {
+        background: #e0f2fe;
+        color: #075985;
+        border: 1px solid #bae6fd;
+      } /* Blue */
+      .badge-fair {
+        background: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #e5e7eb;
+      } /* Gray */
+      .badge-trade {
+        background: #faf5ff;
+        color: #6b21a8;
+        border: 1px solid #e9d5ff;
+      } /* Purple */
+
+      /* Layout Helpers */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+        overflow: hidden;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+
+  <body class="flex flex-col min-h-screen">
+    <!-- COMPACT HEADER -->
+    <header class="sticky top-0 z-50 w-full border-b border-border bg-white">
+      <div class="container-custom flex h-16 items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div
+            class="h-8 w-8 rounded bg-primary flex items-center justify-center text-white font-bold"
+          >
+            G
+          </div>
+          <span
+            class="text-xl font-bold tracking-tight text-primary hidden sm:inline"
+            >Gator<span class="text-foreground">Exchange</span></span
+          >
+        </div>
+        <div class="flex-1 max-w-xl mx-4">
+          <div class="relative">
+            <i
+              data-lucide="search"
+              class="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground"
+            ></i>
+            <input
+              type="text"
+              placeholder="Search Listings..."
+              class="w-full rounded-md border border-input pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-primary">Sell Item</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-custom py-8 flex gap-8">
+      <!-- SIDEBAR FILTERS (Left Side) -->
+      <aside
+        class="w-64 hidden lg:block shrink-0 space-y-8 sticky top-24 h-fit"
+      >
+        <div>
+          <h3 class="font-semibold mb-4">Filters</h3>
+
+          <!-- Availability Filter -->
+          <div class="mb-6 space-y-3">
+            <label class="text-sm font-medium">Availability</label>
+            <label
+              class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                class="rounded border-input text-primary focus:ring-primary"
+              />
+              Shipping Available
+            </label>
+            <label
+              class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked
+                class="rounded border-input text-primary focus:ring-primary"
+              />
+              Local Pickup (Gainesville)
+            </label>
+            <label
+              class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                class="rounded border-input text-secondary focus:ring-secondary"
+              />
+              <span class="font-medium text-foreground">Open to Trades</span>
+            </label>
+          </div>
+
+          <!-- Condition Filter -->
+          <div class="mb-6 space-y-3">
+            <label class="text-sm font-medium">Condition</label>
+            <div class="space-y-2">
+              <label
+                class="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer"
+              >
+                <input type="checkbox" class="rounded border-input" /> Brand New
+              </label>
+              <label
+                class="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer"
+              >
+                <input type="checkbox" class="rounded border-input" /> Like New
+                / Open Box
+              </label>
+              <label
+                class="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer"
+              >
+                <input type="checkbox" class="rounded border-input" /> Good
+                (Light wear)
+              </label>
+              <label
+                class="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer"
+              >
+                <input type="checkbox" class="rounded border-input" /> Fair
+                (Functioning)
+              </label>
+            </div>
+          </div>
+
+          <!-- Price Range -->
+          <div class="mb-6">
+            <label class="text-sm font-medium mb-2 block">Price Range</label>
+            <div class="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Min"
+                class="w-full rounded border border-input px-2 py-1 text-sm"
+              />
+              <span class="text-muted-foreground">-</span>
+              <input
+                type="number"
+                placeholder="Max"
+                class="w-full rounded border border-input px-2 py-1 text-sm"
+              />
+            </div>
+          </div>
+
+          <button class="btn btn-outline w-full justify-center">
+            Reset Filters
+          </button>
+        </div>
+      </aside>
+
+      <!-- MAIN LISTING GRID -->
+      <main class="flex-1">
+        <div class="flex justify-between items-center mb-6">
+          <span class="text-sm text-muted-foreground"
+            >Showing 124 results for "Textbooks"</span
+          >
+          <select
+            class="text-sm border-none bg-transparent font-medium focus:ring-0 cursor-pointer"
+          >
+            <option>Sort by: Newest</option>
+            <option>Sort by: Price (Low to High)</option>
+            <option>Sort by: Distance</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <!-- ITEM CARD 1: Perfect Scenario (Good condition, Trade, Link) -->
+          <article class="card flex flex-col h-full">
+            <!-- Image Area -->
+            <div
+              class="relative h-48 bg-muted w-full flex items-center justify-center overflow-hidden"
+            >
+              <i
+                data-lucide="calculator"
+                class="h-16 w-16 text-muted-foreground/30"
+              ></i>
+              <!-- Floating Distance Badge -->
+              <div
+                class="absolute top-2 left-2 bg-black/60 backdrop-blur text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1"
+              >
+                <i data-lucide="map-pin" class="h-3 w-3"></i> 0.3 miles (Marston
+                Lib)
+              </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-4 flex flex-col flex-1">
+              <!-- Header: Title & Badges -->
+              <div class="flex justify-between items-start gap-2 mb-2">
+                <h2 class="font-semibold text-lg leading-tight truncate">
+                  TI-84 Plus CE Calculator
+                </h2>
+              </div>
+
+              <!-- Condition & Trade Badge Row -->
+              <div class="flex flex-wrap gap-2 mb-3">
+                <span class="badge badge-good">Good Condition</span>
+                <span class="badge badge-trade flex items-center gap-1">
+                  <i data-lucide="arrow-left-right" class="h-3 w-3"></i> Trade
+                  Open
+                </span>
+              </div>
+
+              <!-- Price Section -->
+              <div class="mb-3">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-xl font-bold text-primary">$85.00</span>
+                  <span
+                    class="text-sm text-muted-foreground line-through decoration-muted-foreground/50"
+                    >Est. $140</span
+                  >
+                </div>
+                <a
+                  href="#"
+                  class="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-0.5"
+                >
+                  View on Amazon
+                  <i data-lucide="external-link" class="h-3 w-3"></i>
+                </a>
+              </div>
+
+              <!-- Description -->
+              <p class="text-sm text-muted-foreground line-clamp-2 mb-4">
+                Used for Calculus 2 and 3. Minor scratches on the back cover but
+                screen is perfect. Includes charging cable.
+              </p>
+
+              <!-- Logistics -->
+              <div
+                class="flex items-center gap-4 text-xs text-muted-foreground mb-4 pt-3 border-t border-border border-dashed"
+              >
+                <div class="flex items-center gap-1">
+                  <i data-lucide="package-x" class="h-3.5 w-3.5"></i> No
+                  Shipping
+                </div>
+                <div
+                  class="flex items-center gap-1 text-foreground font-medium"
+                >
+                  <i data-lucide="user" class="h-3.5 w-3.5"></i> Local Pickup
+                </div>
+              </div>
+
+              <!-- Action Buttons (Sticks to bottom) -->
+              <div class="mt-auto flex gap-2">
+                <button class="btn btn-primary flex-1">Chat Seller</button>
+                <button class="btn btn-outline flex-1">Buy / Trade</button>
+                <button class="btn btn-ghost btn-icon" title="Share">
+                  <i data-lucide="share-2" class="h-4 w-4"></i>
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <!-- ITEM CARD 2: Brand New Item (Shipping Available) -->
+          <article class="card flex flex-col h-full">
+            <div
+              class="relative h-48 bg-muted w-full flex items-center justify-center overflow-hidden"
+            >
+              <i
+                data-lucide="headphones"
+                class="h-16 w-16 text-muted-foreground/30"
+              ></i>
+              <div
+                class="absolute top-2 left-2 bg-black/60 backdrop-blur text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1"
+              >
+                <i data-lucide="map-pin" class="h-3 w-3"></i> 2.1 miles (Off
+                Campus)
+              </div>
+            </div>
+
+            <div class="p-4 flex flex-col flex-1">
+              <div class="flex justify-between items-start gap-2 mb-2">
+                <h2 class="font-semibold text-lg leading-tight truncate">
+                  Sony WH-1000XM4 Headphones
+                </h2>
+              </div>
+
+              <div class="flex flex-wrap gap-2 mb-3">
+                <span class="badge badge-new">Brand New</span>
+              </div>
+
+              <div class="mb-3">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-xl font-bold text-primary">$200.00</span>
+                  <span
+                    class="text-sm text-muted-foreground line-through decoration-muted-foreground/50"
+                    >Est. $348</span
+                  >
+                </div>
+                <span class="text-xs text-muted-foreground"
+                  >No Amazon link provided</span
+                >
+              </div>
+
+              <p class="text-sm text-muted-foreground line-clamp-2 mb-4">
+                Got these as a gift but I prefer AirPods. Box is unopened. Price
+                is firm.
+              </p>
+
+              <div
+                class="flex items-center gap-4 text-xs text-muted-foreground mb-4 pt-3 border-t border-border border-dashed"
+              >
+                <div class="flex items-center gap-1 text-green-600 font-medium">
+                  <i data-lucide="truck" class="h-3.5 w-3.5"></i> Shipping Avail
+                </div>
+                <div class="flex items-center gap-1">
+                  <i data-lucide="user" class="h-3.5 w-3.5"></i> Local Pickup
+                </div>
+              </div>
+
+              <div class="mt-auto flex gap-2">
+                <button class="btn btn-primary flex-1">Chat Seller</button>
+                <button class="btn btn-outline flex-1">Buy Now</button>
+                <button class="btn btn-ghost btn-icon">
+                  <i data-lucide="share-2" class="h-4 w-4"></i>
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <!-- ITEM CARD 3: Fair Condition (Heavy Item) -->
+          <article class="card flex flex-col h-full">
+            <div
+              class="relative h-48 bg-muted w-full flex items-center justify-center overflow-hidden"
+            >
+              <i
+                data-lucide="snowflake"
+                class="h-16 w-16 text-muted-foreground/30"
+              ></i>
+              <div
+                class="absolute top-2 left-2 bg-black/60 backdrop-blur text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1"
+              >
+                <i data-lucide="map-pin" class="h-3 w-3"></i> 0.1 miles
+                (Rawlings Hall)
+              </div>
+            </div>
+
+            <div class="p-4 flex flex-col flex-1">
+              <div class="flex justify-between items-start gap-2 mb-2">
+                <h2 class="font-semibold text-lg leading-tight truncate">
+                  Dorm Mini Fridge
+                </h2>
+              </div>
+
+              <div class="flex flex-wrap gap-2 mb-3">
+                <span class="badge badge-fair">Fair Condition</span>
+                <!-- Trade badge optional -->
+              </div>
+
+              <div class="mb-3">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-xl font-bold text-primary">$30.00</span>
+                  <span
+                    class="text-sm text-muted-foreground line-through decoration-muted-foreground/50"
+                    >Est. $110</span
+                  >
+                </div>
+                <a
+                  href="#"
+                  class="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-0.5"
+                >
+                  View on Amazon
+                  <i data-lucide="external-link" class="h-3 w-3"></i>
+                </a>
+              </div>
+
+              <p class="text-sm text-muted-foreground line-clamp-2 mb-4">
+                Works perfectly cold, but has some stickers on the front and a
+                dent on the side. Need gone ASAP.
+              </p>
+
+              <div
+                class="flex items-center gap-4 text-xs text-muted-foreground mb-4 pt-3 border-t border-border border-dashed"
+              >
+                <div class="flex items-center gap-1">
+                  <i data-lucide="package-x" class="h-3.5 w-3.5"></i> No
+                  Shipping
+                </div>
+                <div
+                  class="flex items-center gap-1 text-foreground font-medium"
+                >
+                  <i data-lucide="user" class="h-3.5 w-3.5"></i> Pickup Only
+                </div>
+              </div>
+
+              <div class="mt-auto flex gap-2">
+                <button class="btn btn-primary flex-1">Chat Seller</button>
+                <button class="btn btn-outline flex-1">Buy Now</button>
+                <button class="btn btn-ghost btn-icon">
+                  <i data-lucide="share-2" class="h-4 w-4"></i>
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- Loading State for Infinite Scroll -->
+        <div class="py-12 flex justify-center items-center">
+          <div
+            class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
+          ></div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
