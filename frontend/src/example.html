@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GatorExchange | UF Student Marketplace</title>
+
+    <!-- Tailwind CSS (CDN for prototyping, normally part of build process) -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style type="text/tailwindcss">
+      /* --- PASTE YOUR PROVIDED CSS HERE --- */
+      @import "tailwindcss";
+      /* @import "tw-animate-css";  <-- Commented out for raw HTML prototype compatibility */
+      /* @import "shadcn/tailwind.css"; <-- Commented out for raw HTML prototype compatibility */
+
+      @custom-variant dark (&:is(.dark *));
+
+      :root {
+        /* Base Backgrounds */
+        --background: oklch(1 0 0);
+        --foreground: oklch(0.129 0.042 264.695);
+
+        /* Cards & Popovers */
+        --card: oklch(1 0 0);
+        --card-foreground: oklch(0.129 0.042 264.695);
+        --popover: oklch(1 0 0);
+        --popover-foreground: oklch(0.129 0.042 264.695);
+
+        /* Brand Colors - UF Specific */
+        --primary: oklch(0.424 0.199 265.638); /* UF Blue */
+        --primary-foreground: oklch(0.985 0 0);
+
+        --secondary: oklch(0.705 0.213 47.604); /* UF Orange */
+        --secondary-foreground: oklch(0.141 0.005 285.823);
+
+        /* Muted / Accents */
+        --muted: oklch(0.961 0.006 264.542);
+        --muted-foreground: oklch(0.552 0.021 264.376);
+
+        --accent: oklch(0.961 0.006 264.542);
+        --accent-foreground: oklch(0.424 0.199 265.638);
+
+        /* System Colors */
+        --destructive: oklch(0.577 0.245 27.325);
+        --destructive-foreground: oklch(0.985 0 0);
+
+        --border: oklch(0.897 0.01 264.542);
+        --input: oklch(0.897 0.01 264.542);
+        --ring: oklch(0.424 0.199 265.638);
+
+        --radius: 0.5rem;
+      }
+
+      /* --- THEME CONFIGURATION FOR TAILWIND v4 --- */
+      @theme inline {
+        --color-background: var(--background);
+        --color-foreground: var(--foreground);
+        --color-card: var(--card);
+        --color-card-foreground: var(--card-foreground);
+        --color-popover: var(--popover);
+        --color-popover-foreground: var(--popover-foreground);
+        --color-primary: var(--primary);
+        --color-primary-foreground: var(--primary-foreground);
+        --color-secondary: var(--secondary);
+        --color-secondary-foreground: var(--secondary-foreground);
+        --color-muted: var(--muted);
+        --color-muted-foreground: var(--muted-foreground);
+        --color-accent: var(--accent);
+        --color-accent-foreground: var(--accent-foreground);
+        --color-destructive: var(--destructive);
+        --color-destructive-foreground: var(--destructive-foreground);
+        --color-border: var(--border);
+        --color-input: var(--input);
+        --color-ring: var(--ring);
+
+        --radius-sm: calc(var(--radius) - 4px);
+        --radius-md: calc(var(--radius) - 2px);
+        --radius-lg: var(--radius);
+      }
+
+      @layer base {
+        * {
+          border-color: var(--border);
+        }
+        body {
+          background-color: var(--background);
+          color: var(--foreground);
+          font-family: ui-sans-serif, system-ui, sans-serif;
+          -webkit-font-smoothing: antialiased;
+        }
+      }
+
+      /* --- UTILITIES FOR SHADCN FEEL --- */
+      .container-custom {
+        width: 100%;
+        margin-right: auto;
+        margin-left: auto;
+        padding-right: 1.5rem;
+        padding-left: 1.5rem;
+        max-width: 1400px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        whitespace: nowrap;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition-colors: 0.2s;
+        height: 2.5rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        outline: none;
+      }
+      .btn:focus-visible {
+        box-shadow: 0 0 0 2px var(--ring);
+      }
+
+      .btn-primary {
+        background-color: var(--primary);
+        color: var(--primary-foreground);
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+
+      .btn-secondary {
+        background-color: var(--secondary);
+        color: var(--secondary-foreground);
+      }
+      .btn-secondary:hover {
+        opacity: 0.8;
+      }
+
+      .btn-outline {
+        border: 1px solid var(--border);
+        background-color: transparent;
+      }
+      .btn-outline:hover {
+        background-color: var(--accent);
+        color: var(--accent-foreground);
+      }
+
+      .btn-ghost {
+        background-color: transparent;
+        color: var(--foreground);
+      }
+      .btn-ghost:hover {
+        background-color: var(--accent);
+        color: var(--accent-foreground);
+      }
+
+      .card-hoverable {
+        transition: all 0.2s ease-in-out;
+      }
+      .card-hoverable:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen flex flex-col">
+    <!-- NAVIGATION -->
+    <header
+      class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    >
+      <div class="container-custom flex h-16 items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center gap-2">
+          <div
+            class="h-8 w-8 rounded bg-primary flex items-center justify-center text-primary-foreground font-bold"
+          >
+            G
+          </div>
+          <span class="text-xl font-bold tracking-tight text-primary"
+            >Gator<span class="text-foreground">Exchange</span></span
+          >
+        </div>
+
+        <!-- Search Bar (Hidden on mobile for simplicity) -->
+        <div class="hidden md:flex flex-1 max-w-md mx-8">
+          <div class="relative w-full">
+            <i
+              data-lucide="search"
+              class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
+            ></i>
+            <input
+              type="text"
+              placeholder="Search textbooks, furniture, tickets..."
+              class="w-full rounded-md border border-input bg-background px-9 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2">
+          <button class="btn btn-ghost" title="Favorites">
+            <i data-lucide="heart" class="h-5 w-5"></i>
+          </button>
+          <button class="btn btn-ghost" title="Messages">
+            <i data-lucide="message-circle" class="h-5 w-5"></i>
+          </button>
+          <div class="h-8 w-px bg-border mx-1"></div>
+          <button class="btn btn-outline hidden sm:inline-flex">Log in</button>
+          <button class="btn btn-primary gap-2">
+            <i data-lucide="plus-circle" class="h-4 w-4"></i>
+            Sell Item
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1">
+      <!-- HERO SECTION -->
+      <section class="container-custom py-12 md:py-20 lg:py-24">
+        <div class="flex flex-col items-center text-center gap-4">
+          <div
+            class="inline-flex items-center rounded-full border border-border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground"
+          >
+            <span
+              class="flex h-2 w-2 rounded-full bg-secondary mr-2 animate-pulse"
+            ></span>
+            Only for UF Students & Faculty
+          </div>
+          <h1
+            class="text-4xl font-extrabold tracking-tight lg:text-6xl max-w-3xl"
+          >
+            Buy and sell lightly used gear <br class="hidden sm:inline" />
+            <span class="text-primary">on campus.</span>
+          </h1>
+          <p class="text-muted-foreground max-w-[600px] md:text-xl">
+            The safe, local marketplace for the Gator Nation. Find cheap
+            textbooks, dorm furniture, and game day tickets securely.
+          </p>
+          <div class="flex gap-4 mt-4">
+            <button class="btn btn-primary h-11 px-8 text-base">
+              Browse Listings
+            </button>
+            <button class="btn btn-outline h-11 px-8 text-base">
+              How it Works
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CATEGORIES -->
+      <section class="container-custom pb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-2xl font-bold tracking-tight">Categories</h2>
+          <a href="#" class="text-sm text-primary hover:underline">View all</a>
+        </div>
+        <div class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+          <!-- Category Item -->
+          <button
+            class="flex flex-col items-center gap-2 min-w-[100px] group cursor-pointer"
+          >
+            <div
+              class="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors"
+            >
+              <i
+                data-lucide="book"
+                class="h-8 w-8 text-foreground group-hover:text-primary transition-colors"
+              ></i>
+            </div>
+            <span class="text-sm font-medium">Textbooks</span>
+          </button>
+
+          <button
+            class="flex flex-col items-center gap-2 min-w-[100px] group cursor-pointer"
+          >
+            <div
+              class="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors"
+            >
+              <i
+                data-lucide="sofa"
+                class="h-8 w-8 text-foreground group-hover:text-primary transition-colors"
+              ></i>
+            </div>
+            <span class="text-sm font-medium">Furniture</span>
+          </button>
+
+          <button
+            class="flex flex-col items-center gap-2 min-w-[100px] group cursor-pointer"
+          >
+            <div
+              class="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors"
+            >
+              <i
+                data-lucide="laptop"
+                class="h-8 w-8 text-foreground group-hover:text-primary transition-colors"
+              ></i>
+            </div>
+            <span class="text-sm font-medium">Electronics</span>
+          </button>
+
+          <button
+            class="flex flex-col items-center gap-2 min-w-[100px] group cursor-pointer"
+          >
+            <div
+              class="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors"
+            >
+              <i
+                data-lucide="ticket"
+                class="h-8 w-8 text-foreground group-hover:text-primary transition-colors"
+              ></i>
+            </div>
+            <span class="text-sm font-medium">Tickets</span>
+          </button>
+
+          <button
+            class="flex flex-col items-center gap-2 min-w-[100px] group cursor-pointer"
+          >
+            <div
+              class="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors"
+            >
+              <i
+                data-lucide="bike"
+                class="h-8 w-8 text-foreground group-hover:text-primary transition-colors"
+              ></i>
+            </div>
+            <span class="text-sm font-medium">Transport</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- FEATURED LISTINGS GRID -->
+      <section class="container-custom py-8">
+        <h2 class="text-2xl font-bold tracking-tight mb-6">Fresh Finds</h2>
+
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+        >
+          <!-- CARD 1 -->
+          <div
+            class="group rounded-xl border border-border bg-card text-card-foreground shadow-sm overflow-hidden card-hoverable"
+          >
+            <div class="relative aspect-square bg-muted">
+              <!-- Placeholder Image -->
+              <div
+                class="absolute inset-0 flex items-center justify-center text-muted-foreground/20"
+              >
+                <i data-lucide="image" class="h-16 w-16"></i>
+              </div>
+              <span
+                class="absolute top-2 right-2 bg-background/80 backdrop-blur text-xs font-semibold px-2 py-1 rounded-md border border-border"
+                >2h ago</span
+              >
+            </div>
+            <div class="p-4 space-y-2">
+              <div class="flex justify-between items-start">
+                <h3 class="font-semibold leading-none tracking-tight">
+                  Calculus 3 Textbook
+                </h3>
+                <button
+                  class="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <i data-lucide="heart" class="h-4 w-4"></i>
+                </button>
+              </div>
+              <p class="text-xs text-muted-foreground">
+                Early Transcendentals, 8th Ed.
+              </p>
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-lg font-bold text-primary">$45.00</span>
+                <span
+                  class="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full font-medium"
+                  >Good</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 2 -->
+          <div
+            class="group rounded-xl border border-border bg-card text-card-foreground shadow-sm overflow-hidden card-hoverable"
+          >
+            <div class="relative aspect-square bg-muted">
+              <!-- Placeholder Image -->
+              <div
+                class="absolute inset-0 flex items-center justify-center text-muted-foreground/20"
+              >
+                <i data-lucide="bike" class="h-16 w-16"></i>
+              </div>
+            </div>
+            <div class="p-4 space-y-2">
+              <div class="flex justify-between items-start">
+                <h3 class="font-semibold leading-none tracking-tight">
+                  Road Bike (Fixie)
+                </h3>
+                <button
+                  class="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <i data-lucide="heart" class="h-4 w-4"></i>
+                </button>
+              </div>
+              <p class="text-xs text-muted-foreground">
+                Great for getting to class. Tires new.
+              </p>
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-lg font-bold text-primary">$120.00</span>
+                <span
+                  class="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium border border-border"
+                  >Used</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 3 -->
+          <div
+            class="group rounded-xl border border-border bg-card text-card-foreground shadow-sm overflow-hidden card-hoverable"
+          >
+            <div class="relative aspect-square bg-muted">
+              <div
+                class="absolute inset-0 flex items-center justify-center text-muted-foreground/20"
+              >
+                <i data-lucide="armchair" class="h-16 w-16"></i>
+              </div>
+              <span
+                class="absolute top-2 right-2 bg-secondary text-secondary-foreground text-xs font-semibold px-2 py-1 rounded-md"
+                >Hot</span
+              >
+            </div>
+            <div class="p-4 space-y-2">
+              <div class="flex justify-between items-start">
+                <h3 class="font-semibold leading-none tracking-tight">
+                  IKEA Desk Chair
+                </h3>
+                <button
+                  class="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <i data-lucide="heart" class="h-4 w-4"></i>
+                </button>
+              </div>
+              <p class="text-xs text-muted-foreground">
+                Moving out sale. Must go by Friday.
+              </p>
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-lg font-bold text-primary">$25.00</span>
+                <span
+                  class="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100 px-2 py-0.5 rounded-full font-medium"
+                  >Like New</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 4 -->
+          <div
+            class="group rounded-xl border border-border bg-card text-card-foreground shadow-sm overflow-hidden card-hoverable"
+          >
+            <div class="relative aspect-square bg-muted">
+              <div
+                class="absolute inset-0 flex items-center justify-center text-muted-foreground/20"
+              >
+                <i data-lucide="monitor" class="h-16 w-16"></i>
+              </div>
+            </div>
+            <div class="p-4 space-y-2">
+              <div class="flex justify-between items-start">
+                <h3 class="font-semibold leading-none tracking-tight">
+                  24" Gaming Monitor
+                </h3>
+                <button
+                  class="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <i data-lucide="heart" class="h-4 w-4"></i>
+                </button>
+              </div>
+              <p class="text-xs text-muted-foreground">
+                144hz refresh rate. No scratches.
+              </p>
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-lg font-bold text-primary">$90.00</span>
+                <span
+                  class="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium border border-border"
+                  >Used</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-border bg-muted/30 py-12 mt-12">
+      <div class="container-custom grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="space-y-4">
+          <span class="text-lg font-bold text-primary">GatorExchange</span>
+          <p class="text-sm text-muted-foreground">
+            A Software Design Engineering project at the University of Florida.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="font-semibold mb-4">Marketplace</h4>
+          <ul class="space-y-2 text-sm text-muted-foreground">
+            <li><a href="#" class="hover:text-primary">All Listings</a></li>
+            <li><a href="#" class="hover:text-primary">Electronics</a></li>
+            <li><a href="#" class="hover:text-primary">Housing</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold mb-4">Support</h4>
+          <ul class="space-y-2 text-sm text-muted-foreground">
+            <li><a href="#" class="hover:text-primary">Safety Tips</a></li>
+            <li><a href="#" class="hover:text-primary">Contact Us</a></li>
+            <li><a href="#" class="hover:text-primary">Report Scam</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold mb-4">Legal</h4>
+          <ul class="space-y-2 text-sm text-muted-foreground">
+            <li><a href="#" class="hover:text-primary">Privacy Policy</a></li>
+            <li><a href="#" class="hover:text-primary">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div
+        class="container-custom mt-12 pt-8 border-t border-border text-center text-xs text-muted-foreground"
+      >
+        &copy; 2024 GatorExchange SDE Project. Go Gators!
+      </div>
+    </footer>
+
+    <script>
+      // Initialize Lucide Icons
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
