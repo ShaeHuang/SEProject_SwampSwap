@@ -16,6 +16,9 @@ func main() {
 	public := r.Group("/api")
 	public.POST("/register", Register)
 	public.POST("/login", Login)
+	protected := r.Group("/api/admin")
+	protected.Use(JWTMiddleware())
+	protected.GET("/user", CurrentUser)
 	err := r.Run(":8080")
 	if err != nil {
 		return
