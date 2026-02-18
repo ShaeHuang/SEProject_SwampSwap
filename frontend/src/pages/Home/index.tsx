@@ -15,6 +15,7 @@ function HomePage() {
       <div className="flex gap-3">
         <Button onClick={() => navigate("/login")}>Start Exploring</Button>
         <Button variant="outline">Post Item</Button>
+        <Button variant="outline" onClick={() => navigate("/user-info")}>User Information</Button>
       </div>
     </div>
     </div>
