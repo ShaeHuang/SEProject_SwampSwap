@@ -6,6 +6,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func CurrentUser(c *gin.Context) {
+	user_id, err := ExtractTokenID(c) //Get token
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	u, err := GetUserByID(user_id) //Get user from token
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success", "data": u})
+}
+
 type UserInput struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
@@ -18,13 +34,13 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	_, err := LoginCheck(input.Username, input.Password) //Check if login is valid
+	token, err := LoginCheck(input.Username, input.Password) //Check if login is valid
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "incorrect username/password"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "login successful"})
+	c.JSON(http.StatusOK, gin.H{"login successful, user token:": token})
 }
 
 func Register(c *gin.Context) {
