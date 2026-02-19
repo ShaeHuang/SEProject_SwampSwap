@@ -9,10 +9,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct { //User model for database
+type User struct {
 	gorm.Model
 	Username string `gorm:"type:varchar;not null;unique" json:"username"`
-	Password string `gorm:"type:varchar;not null;" json:"password"`
+	Password string `gorm:"type:varchar;not null;" json:"-"` // json:"-" hides password
+	Email    string `gorm:"type:varchar" json:"email"`
+	Avatar   string `gorm:"type:varchar" json:"avatar"`
+	Bio      string `gorm:"type:text" json:"bio"`
 }
 
 func GetUserByID(uid uint) (User, error) {

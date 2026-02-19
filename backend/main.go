@@ -16,6 +16,8 @@ func main() {
 	public := r.Group("/api")
 	public.POST("/register", Register)
 	public.POST("/login", Login)
+	public.GET("/user/:id", GetUserProfile)  // ADD THIS LINE
+
 	protected := r.Group("/api/admin")
 	protected.Use(JWTMiddleware())
 	protected.GET("/user", CurrentUser)
