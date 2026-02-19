@@ -13,7 +13,17 @@
 10. As a user, I want a “View Items” entry point from my profile, so that I can quickly access my listings.
 
 ## Backend (10)
-(TBD by backend team)
+11. As a backend system, I want to handle user registration and login so that people can use our website.
+12. As a backend system, I want the passwords of users to be stored securely so that their accounts are safe from potential adversaries.
+13. As a backend system, I want to handle secure password changes and resets so that users can recover accounts and update credentials safely.
+14. As a backend system, I want frequent human users of the website to be visibly verified to make scams harder to perform.
+15. As a backend system, I want the API to be as performant as possible while still serving all needed functions to minimize lag for the end users.
+16. As a backend system, I want to provide full CRUD operations for swap listings, so that users can create, view, edit and delete what they're offering. 
+17. As a backend system, I want to support search and filtering on listings, so that the frontend can let users narrow down results.
+18. As a backend system, I want to handle image uploads for listings, so that users can attach photos to what they're swapping.
+19. As a backend system, I want to provide a messaging API between users, so that they can coordinate a swap after showing interest
+20. As a backend system, I want to provide user profile retrieval and editing capabilities, so that users can view and update their account information.
+
 
 # Planned Issues
 Frontend: 
@@ -23,7 +33,12 @@ Frontend:
 - Build User Information (profile) page UI (mocked data is acceptable for Sprint 1).
 - (Planned next / stretch) Wire profile buttons (Edit Profile / View Items) to real pages and connect to backend APIs when endpoints are ready.
 
-Backend: ...
+Backend: 
+- Get the login API calls working with the frontend.
+- Make a SQLite table for the listings with the username being the key.
+- Create an API call for users to add/delete listings.
+- Add functionality for users to change their password in case it is lost.
+- Expand the User schema to support a profile with the appropriate REST API calls.
 
 # Completed Tasks
 Frontend: 
@@ -36,7 +51,10 @@ Frontend:
 - Recorded the frontend demo video showing the current UI and page navigation.
 
 
-Backend: ...
+Backend: 
+- Set up a basic Go web server using Gin for routing and GORM plus SQLite for the database.
+- Created 3 REST API routes for the user database: one for registering, one for logging in, and one for retrieving user information.
+- Implemented hashing and JSON Web Tokens (JWTs) to make password storage and processing secure.
 
 # Incomplete Tasks
 Frontend: 
@@ -47,4 +65,9 @@ Frontend:
 Why incomplete (Frontend):
 - Sprint 1 focused on establishing a stable frontend foundation (scaffold + routing + core pages) to unblock parallel development and enable Sprint 2 API integration.
 
-Backend: ...
+Backend:
+- User schema is rather basic currently, not supporting anything with listings yet.
+- There is no connection to the frontend website yet; the API is self-contained.
+
+Why incomplete (Backend):
+- We wanted to get a solid bedrock of code that is easy to expand upon rather than brute forcing it by hard coding everything, which will waste time in the long run.
