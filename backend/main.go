@@ -14,11 +14,17 @@ func main() {
 	ConnectDatabase()
 	r := gin.Default()
 	public := r.Group("/api")
+	
 	public.POST("/register", Register)
 	public.POST("/login", Login)
+	public.GET("/listings", GetListings)
+	public.GET("/listings/:id", GetListingByID)
 	protected := r.Group("/api/admin")
 	protected.Use(JWTMiddleware())
 	protected.GET("/user", CurrentUser)
+	protected.POST("/listings", CreateListing)
+	protected.PUT("/listings/:id", UpdateListing)
+	protected.DELETE("/listings/:id", DeleteListing)
 	err := r.Run(":8080")
 	if err != nil {
 		return
@@ -34,5 +40,5 @@ func ConnectDatabase() {
 	}
 
 	DB = database
-	DB.AutoMigrate(&User{}) //Create database of users
+	DB.AutoMigrate(&User{}, &Listing{}) //Create database of users
 }

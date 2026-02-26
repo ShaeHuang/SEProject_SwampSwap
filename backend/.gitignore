@@ -1,0 +1,47 @@
+# Test files
+test_listings.sh
+*.test
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Go build outputs
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go test coverage
+*.out
+coverage.html
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+
+# Go workspace file
+go.work
+
+# Dependency directories (vendor should be committed if you vendor deps)
+# vendor/
+
+# Temporary files
+tmp/
+temp/
+
+
