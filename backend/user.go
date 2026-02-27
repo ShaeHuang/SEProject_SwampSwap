@@ -4,7 +4,7 @@ import (
 	"errors"
 	"html"
 	"strings"
-
+	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -61,4 +61,71 @@ func (u *User) SaveUser() (*User, error) {
 	}
 
 	return u, nil
+}
+
+
+
+func GetUserPublic(c *gin.Context) {
+    id := c.Param("id")
+    var u User
+
+    if err := DB.First(&u, id).Error; err != nil {
+        c.JSON(404, gin.H{"error": "User not found"})
+        return
+    }
+
+    u.Password = "" // make sure password is not returned 
+    c.JSON(200, u)
+}
+
+
+type UpdateUserInput struct {
+    Username string `json:"username"`
+    Password string `json:"password"`
+}
+
+func UpdateUser(c *gin.Context) {
+    uid, err := ExtractTokenID(c)
+    if err != nil {
+        c.JSON(401, gin.H{"error": "Unauthorized"})
+        return
+    }
+
+    var u User
+    if err := DB.First(&u, uid).Error; err != nil {
+        c.JSON(404, gin.H{"error": "User not found"})
+        return
+    }
+
+    var input UpdateUserInput
+    if err := c.ShouldBindJSON(&input); err != nil {
+        c.JSON(400, gin.H{"error": "Invalid JSON"})
+        return
+    }
+
+    // Update username if provided
+    if input.Username != "" {
+        u.Username = html.EscapeString(strings.TrimSpace(input.Username))
+    }
+
+    // Update password if provided
+    if input.Password != "" {
+        hashed, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+        u.Password = string(hashed)
+    }
+
+	if err := DB.Save(&u).Error; err != nil {
+		c.JSON(400, gin.H{
+			"error":   "Could not update user",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	u.Password = ""
+
+	c.JSON(200, gin.H{
+		"message": "User updated successfully",
+		"user":    u,
+	})
 }
