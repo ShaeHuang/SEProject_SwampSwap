@@ -19,12 +19,15 @@ func main() {
 	public.POST("/login", Login)
 	public.GET("/listings", GetListings)
 	public.GET("/listings/:id", GetListingByID)
+	public.GET("/user/:id", GetUserPublic)
+
 	protected := r.Group("/api/admin")
 	protected.Use(JWTMiddleware())
 	protected.GET("/user", CurrentUser)
 	protected.POST("/listings", CreateListing)
 	protected.PUT("/listings/:id", UpdateListing)
 	protected.DELETE("/listings/:id", DeleteListing)
+	protected.PUT("/user", UpdateUser)
 	err := r.Run(":8080")
 	if err != nil {
 		return
