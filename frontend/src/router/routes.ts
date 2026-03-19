@@ -3,6 +3,7 @@ import HomePage from "@/pages/Home";
 import RegisterPage from "@/pages/Register";
 import LoginPage from "@/pages/Login";
 import UserPage from "@/pages/User";
+import ChatPage from "@/pages/Chat";
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,9 @@ export const router = createBrowserRouter([
   {
     path: "/user-info",
     Component: UserPage,
-
+  },
+  {
+    path: "/chat",
+    Component: ChatPage,
   },
 ]);

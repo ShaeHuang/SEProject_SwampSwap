@@ -16,6 +16,7 @@ function HomePage() {
         <Button onClick={() => navigate("/login")}>Start Exploring</Button>
         <Button variant="outline">Post Item</Button>
         <Button variant="outline" onClick={() => navigate("/user-info")}>User Information</Button>
+        <Button variant="outline" onClick={() => navigate("/chat")}>Messages</Button>
       </div>
     </div>
     </div>
