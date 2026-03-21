@@ -5,16 +5,25 @@
 ### GET /api/listings
 Returns all active listings.
 
+**Query Parameters:**
+- `search`: optional keyword matched against title and description
+- `sort`: optional sort order, one of `latest`, `oldest`, `price_asc`, `price_desc`
+- `status`: optional filter, one of `all`, `available`, `sold`
+
 **Response (200 OK):**
 ```json
 [
   {
-    "ID": 1,
+    "id": 1,
     "title": "iPhone 13",
     "description": "Barely used",
     "price": 500,
     "user_id": 1,
-    "CreatedAt": "2026-02-22T15:25:00Z"
+    "status": "available",
+    "buyer_id": null,
+    "seller_username": "alice",
+    "created_at": "2026-02-22T15:25:00Z",
+    "updated_at": "2026-02-22T15:25:00Z"
   }
 ]
 ```
@@ -60,3 +69,29 @@ Delete a listing (owner only).
 
 **Response (200 OK):** `{"message": "Listing deleted successfully."}`
 **Response (401 Unauthorized):** Not owner or no auth
+
+### POST /api/admin/listings/:id/buy
+Buy an available listing.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200 OK):**
+```json
+{
+  "message": "Listing purchased successfully.",
+  "id": 1,
+  "title": "iPhone 13",
+  "description": "Barely used",
+  "price": 500,
+  "user_id": 1,
+  "status": "sold",
+  "buyer_id": 2,
+  "seller_username": "alice",
+  "created_at": "2026-02-22T15:25:00Z",
+  "updated_at": "2026-02-22T15:30:00Z"
+}
+```
+
+**Response (400 Bad Request):**
+- `{"error": "This listing is no longer available."}`
+- `{"error": "You cannot buy your own listing."}`

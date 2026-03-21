@@ -71,3 +71,19 @@ export default defineConfig([
   },
 ])
 ```
+
+## Cypress Login Tests
+
+The frontend workspace now includes a Cypress E2E spec for the login flow.
+
+### Local assumptions
+
+- Start the Vite app locally at `http://127.0.0.1:5173` with `pnpm dev --host 127.0.0.1 --port 5173`.
+- The login suite stubs `POST /api/login` with `cy.intercept()`, so the backend does not need seeded test credentials for this spec.
+- If Cypress has not downloaded its desktop binary on your machine yet, run `pnpm exec cypress install` once from the `frontend` directory.
+
+### Useful commands
+
+- `pnpm cypress:open`: open Cypress interactively.
+- `pnpm cypress:run`: run the full Cypress E2E suite headlessly.
+- `pnpm cypress:login`: run only the login-focused spec headlessly.

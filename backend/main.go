@@ -13,8 +13,9 @@ var DB *gorm.DB
 func main() {
 	ConnectDatabase()
 	r := gin.Default()
+	r.Use(CORSMiddleware())
 	public := r.Group("/api")
-	
+
 	public.POST("/register", Register)
 	public.POST("/login", Login)
 	public.GET("/listings", GetListings)
@@ -27,6 +28,7 @@ func main() {
 	protected.POST("/listings", CreateListing)
 	protected.PUT("/listings/:id", UpdateListing)
 	protected.DELETE("/listings/:id", DeleteListing)
+	protected.POST("/listings/:id/buy", BuyListing)
 	protected.PUT("/user", UpdateUser)
 	err := r.Run(":8080")
 	if err != nil {

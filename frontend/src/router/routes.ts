@@ -4,6 +4,8 @@ import RegisterPage from "@/pages/Register";
 import LoginPage from "@/pages/Login";
 import UserPage from "@/pages/User";
 import ChatPage from "@/pages/Chat";
+import ListingsPage from "@/pages/Listings";
+import ListingDetailPage from "@/pages/ListingDetail";
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +19,14 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     Component: LoginPage,
+  },
+  {
+    path: "/listings",
+    Component: ListingsPage,
+  },
+  {
+    path: "/listings/:id",
+    Component: ListingDetailPage,
   },
   {
     path: "/user-info",

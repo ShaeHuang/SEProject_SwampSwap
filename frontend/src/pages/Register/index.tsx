@@ -134,12 +134,14 @@ function RegisterPage() {
       phoneNumber: phoneNumber,
       password: password,
     };
-    const response: RegisterResponse = await register(data);
-    if (response.message === "Register successful") {
-      toast.success("Registration successful");
-      navigate("/login");
-    } else {
-      console.log("Register failed");
+    try {
+      const response: RegisterResponse = await register(data);
+      if (response.message === "Register successful") {
+        toast.success("Registration successful");
+        navigate("/login");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Registration failed");
     }
   };
 
