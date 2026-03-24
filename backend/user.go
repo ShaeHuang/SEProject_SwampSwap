@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"net/http"
 	"strings"
+
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
 	"gorm.io/gorm"
-
 )
 
 type User struct {
@@ -35,13 +35,13 @@ func VerifyPassword(password, hashedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func LoginCheck(username string, password string) (string, error) {
+func LoginCheck(id string, password string) (string, error) {
 	var err error
 	u := User{}
-	err = DB.Model(User{}).Where("username = ?", username).Take(&u).Error //Verify that user exists before proceeding
+	err = DB.Model(User{}).Where("email = ?", id).Or("username = ?", id).Take(&u).Error //Verify that user exists before proceeding
 	err = VerifyPassword(password, u.Password)
 	if err != nil {
-		return "", err //Incorrect username or password
+		return "", err //Incorrect id or password
 	}
 
 	token, err := GenerateToken(u.ID)
@@ -68,8 +68,6 @@ func (u *User) SaveUser() (*User, error) {
 
 	return u, nil
 }
-
-
 
 func GetUserPublic(c *gin.Context) {
 	id := c.Param("id")
@@ -100,44 +98,43 @@ func GetUserPublic(c *gin.Context) {
 	})
 }
 
-
 type UpdateUserInput struct {
-    Username string `json:"username"`
-    Password string `json:"password"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 	Email    string `json:"email"`
 	Avatar   string `json:"avatar"`
 	Bio      string `json:"bio"`
 }
 
 func UpdateUser(c *gin.Context) {
-    uid, err := ExtractTokenID(c)
-    if err != nil {
-        c.JSON(401, gin.H{"error": "Unauthorized"})
-        return
-    }
+	uid, err := ExtractTokenID(c)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "Unauthorized"})
+		return
+	}
 
-    var u User
-    if err := DB.First(&u, uid).Error; err != nil {
-        c.JSON(404, gin.H{"error": "User not found"})
-        return
-    }
+	var u User
+	if err := DB.First(&u, uid).Error; err != nil {
+		c.JSON(404, gin.H{"error": "User not found"})
+		return
+	}
 
-    var input UpdateUserInput
-    if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(400, gin.H{"error": "Invalid JSON"})
-        return
-    }
+	var input UpdateUserInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid JSON"})
+		return
+	}
 
-    // Update username if provided
-    if input.Username != "" {
-        u.Username = html.EscapeString(strings.TrimSpace(input.Username))
-    }
+	// Update username if provided
+	if input.Username != "" {
+		u.Username = html.EscapeString(strings.TrimSpace(input.Username))
+	}
 
-    // Update password if provided
-    if input.Password != "" {
-        hashed, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
-        u.Password = string(hashed)
-    }
+	// Update password if provided
+	if input.Password != "" {
+		hashed, _ := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+		u.Password = string(hashed)
+	}
 	// Update email if provided
 	if input.Email != "" {
 		u.Email = html.EscapeString(strings.TrimSpace(input.Email))
