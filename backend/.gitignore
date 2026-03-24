@@ -1,6 +1,4 @@
-# Test files
-test_listings.sh
-*.test
+
 
 # Database files
 *.db
