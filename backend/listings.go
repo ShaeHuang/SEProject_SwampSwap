@@ -146,6 +146,7 @@ func UpdateListing(c *gin.Context) {
 	listing.Title = input.Title
 	listing.Description = input.Description
 	listing.Price = input.Price
+	listing.Status = input.Status
 
 	// Save to DB
 	if err := DB.Save(&listing).Error; err != nil {
