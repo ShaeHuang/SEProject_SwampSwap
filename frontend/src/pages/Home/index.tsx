@@ -13,8 +13,8 @@ function HomePage() {
         Campus Second-hand Trading Platform — Here is the start home page
       </p>
       <div className="flex gap-3">
-        <Button onClick={() => navigate("/login")}>Start Exploring</Button>
-        <Button variant="outline">Post Item</Button>
+        <Button onClick={() => navigate("/listings")}>Start Exploring</Button>
+        <Button variant="outline" onClick={() => navigate("/listings")}>Post Item</Button>
         <Button variant="outline" onClick={() => navigate("/user-info")}>User Information</Button>
         <Button variant="outline" onClick={() => navigate("/chat")}>Messages</Button>
       </div>

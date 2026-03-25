@@ -8,6 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run --e2e",
+    "cypress:login": "cypress run --e2e --spec cypress/e2e/login.cy.ts"
     "test": "vitest",
     "test:ui": "vitest --ui"
   },

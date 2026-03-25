@@ -14,18 +14,19 @@ import { Label } from "@/components/ui/label";
 
 import { login, type LoginData, type LoginResponse } from "@/api/auth";
 import { toast } from "sonner";
-import { validateEmail, validatePassword } from "@/lib/validation";
+import { validatePassword } from "@/lib/validation";
 import { useNavigate } from "react-router-dom";
 function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {},
-  );
+  const [errors, setErrors] = useState<{
+    identifier?: string;
+    password?: string;
+  }>({});
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
+  const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIdentifier(e.target.value);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,10 +38,12 @@ function LoginPage() {
   };
 
   const handleLogin = async () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { identifier?: string; password?: string } = {};
+    const normalizedIdentifier = identifier.trim();
 
-    const emailError = validateEmail(email);
-    if (emailError) newErrors.email = emailError;
+    if (!normalizedIdentifier) {
+      newErrors.identifier = "Username or email is required";
+    }
 
     const passwordError = validatePassword(password);
     if (passwordError) newErrors.password = passwordError;
@@ -52,15 +55,17 @@ function LoginPage() {
     }
 
     const data: LoginData = {
-      email: email,
-      password: password,
+      identifier: normalizedIdentifier,
+      password,
     };
-    const response: LoginResponse = await login(data);
-    if (response.message === "Login successful") {
-      toast.success("Login successful");
-      navigate("/");
-    } else {
-      console.log("Login failed");
+    try {
+      const response: LoginResponse = await login(data);
+      if (response.message === "Login successful") {
+        toast.success("Login successful");
+        navigate("/");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Login failed");
     }
   };
   return (
@@ -87,19 +92,19 @@ function LoginPage() {
           <form>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email" className="font-bold">
-                  Email
+                <Label htmlFor="identifier" className="font-bold">
+                  Username or Email
                 </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="albert@ufl.edu"
+                  id="identifier"
+                  type="text"
+                  placeholder="Enter your username or email"
                   required
-                  value={email}
-                  onChange={handleEmailChange}
+                  value={identifier}
+                  onChange={handleIdentifierChange}
                 />
-                {errors.email && (
-                  <p className="text-destructive text-sm">{errors.email}</p>
+                {errors.identifier && (
+                  <p className="text-destructive text-sm">{errors.identifier}</p>
                 )}
               </div>
               <div className="grid gap-2">
