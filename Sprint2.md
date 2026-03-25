@@ -37,7 +37,7 @@
   - `cd frontend && npm test`
 
 ### PR / Branch
-- My work is submitted via PR: **#45** (`test/cypress-user-info`)
+- My work is submitted via PR: **#39** (`test/cypress-user-info`)
 
 ---
 
