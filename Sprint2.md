@@ -136,7 +136,7 @@
 
 # 3) Backend Unit Tests Summary (Team)
 ### user_listings_test.go
-- To run, simply run ``go test .`` in the backend folder.
+- To run, simply run ``go test .`` in the ``backend`` folder.
 - Unit Tests:
   - ``TestUpdateUser()``
     - This test first creates a user in the database with ``POST api/register``, then logs them in with ``POST api/login ``, outputting a token.
@@ -147,8 +147,3 @@
     - It then calls ``POST api/listings`` to create two new listings from the new user, with one of them being marked as sold.
     - The user's information is grabbed through ``GET api/user/1``, and the test checks their listings, verifying that they have two items posted and one sold item.
     - The database is wiped at the end to make repeated testing simpler.
-
-Suggested run command format:
-```bash
-cd backend
-go test ./...
