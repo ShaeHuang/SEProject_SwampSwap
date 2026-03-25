@@ -88,13 +88,27 @@
 
 ---
 
----
-
 ## [Aidan Winney] (Backend)
-- (Fill in your Sprint 2 work here)
-- Backend endpoints implemented/updated:
-- Backend unit tests added:
-- PR(s):
+### Search Functionality for Backend API
+- Created a new ``search.go`` file which supports lookup for existing listings.
+  - The currently supported filters are:
+    -  Keyword (substring in either the title or the description),
+    -  Minimum selling price, and
+    -  Maximum selling price.
+  - The search functionality was made robust using pointers for the GORM model, allowing every field to be optional.
+    - This allows queries to use any combination of the filters with no limitations.   
+  - I am open to adding more filters based on the needs of the frontend in future sprints (by user, listing recency, et cetera).
+- For how to run this new functionality, refer to the backend API documentation later on in this document.
+
+### User Login API Change
+- Overhauled the login API call in ``auth.go`` to support either an email or a username as the ID credential as requested by the frontend team.
+  - The JSON input for "username" was changed to "id" to reflect this change.
+
+### Bug Fixes and Cleaning up Backend Code
+- Various bug fixes for the backend code, including:
+  - Changed some unit tests that were failing due to my API changes, 
+  - Allowed the frontend to change the status of a listing through the ``PUT api/listings`` call in ``listings.go``, as it was causing the frontend team some issues due to the lack of functionality.
+- PR(s): #42, #47, #48
 
 ---
 
