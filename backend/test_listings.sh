@@ -33,7 +33,7 @@ echo ""
 echo "${YELLOW}Test 2: Login and Get Token${NC}"
 RESPONSE=$(curl -s -X POST $BASE_URL/api/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser123","password":"password123"}')
+  -d '{"id":"testuser123","password":"password123"}')
 
 TOKEN=$(echo $RESPONSE | grep -o '"login successful, user token:":"[^"]*"' | cut -d'"' -f4)
 
