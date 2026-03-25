@@ -1,9 +1,7 @@
 import type {
   CreateListingData,
   Listing,
-  ListingFilterStatus,
   ListingQueryParams,
-  ListingSort,
 } from "@/types/listing";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
@@ -35,26 +33,10 @@ const readJson = async <T>(response: Response): Promise<T> => {
 export const isAuthenticated = () => Boolean(getToken());
 
 export const listListings = async (
-  params: ListingQueryParams = {},
+  // Query params kept for future backend support
+  _params?: ListingQueryParams,
 ): Promise<Listing[]> => {
-  const searchParams = new URLSearchParams();
-
-  if (params.search?.trim()) {
-    searchParams.set("search", params.search.trim());
-  }
-
-  if (params.sort) {
-    searchParams.set("sort", params.sort);
-  }
-
-  if (params.status && params.status !== "all") {
-    searchParams.set("status", params.status);
-  }
-
-  const queryString = searchParams.toString();
-  const response = await fetch(
-    `${BASE_URL}/listings${queryString ? `?${queryString}` : ""}`,
-  );
+  const response = await fetch(`${BASE_URL}/listings`);
 
   return readJson<Listing[]>(response);
 };
@@ -68,7 +50,7 @@ export const getListingById = async (id: string): Promise<Listing> => {
 export const createListing = async (
   data: CreateListingData,
 ): Promise<Listing> => {
-  const response = await fetch(`${BASE_URL}/admin/listings`, {
+  const response = await fetch(`${BASE_URL}/listings`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -81,15 +63,17 @@ export const createListing = async (
 };
 
 export const buyListing = async (id: number): Promise<Listing> => {
-  const response = await fetch(`${BASE_URL}/admin/listings/${id}/buy`, {
-    method: "POST",
+  const response = await fetch(`${BASE_URL}/listings/${id}`, {
+    method: "PUT",
     headers: {
+      "Content-Type": "application/json",
       ...getAuthHeaders(),
     },
+    body: JSON.stringify({ status: "sold" }),
   });
 
   return readJson<Listing>(response);
 };
 
-export const defaultListingSort: ListingSort = "latest";
-export const defaultListingStatus: ListingFilterStatus = "all";
+export const defaultListingSort = "latest" as const;
+export const defaultListingStatus = "all" as const;

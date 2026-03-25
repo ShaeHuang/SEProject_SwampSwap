@@ -5,16 +5,15 @@ export type ListingSort = "latest" | "oldest" | "price_asc" | "price_desc";
 export type ListingFilterStatus = ListingStatus | "all";
 
 export interface Listing {
-  id: number;
-  created_at: string;
-  updated_at: string;
+  ID: number;
+  CreatedAt: string;
+  UpdatedAt: string;
+  DeletedAt: string | null;
   title: string;
   description: string;
   price: number;
   user_id: number;
   status: ListingStatus;
-  buyer_id: number | null;
-  seller_username: string;
 }
 
 export interface ListingQueryParams {

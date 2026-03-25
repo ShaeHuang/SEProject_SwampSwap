@@ -42,7 +42,7 @@ export const register = async (
   const response = await fetch(`${BASE_URL}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: data.userName, password: data.password }),
+    body: JSON.stringify({ username: data.userName, password: data.password, email: data.email }),
   });
 
   const json = await response.json();
@@ -67,7 +67,7 @@ export const login = async (data: LoginData): Promise<LoginResponse> => {
   const response = await fetch(`${BASE_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: data.identifier, password: data.password }),
+    body: JSON.stringify({ id: data.identifier, password: data.password }),
   });
 
   const json = await response.json();
@@ -92,7 +92,7 @@ export const getCurrentUser = async (): Promise<CurrentUser> => {
     throw new Error("No active session");
   }
 
-  const response = await fetch(`${BASE_URL}/admin/user`, {
+  const response = await fetch(`${BASE_URL}/user`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

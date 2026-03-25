@@ -102,7 +102,7 @@ function ListingDetailPage() {
                 <div className="space-y-2">
                   <CardTitle className="text-3xl">{listing.title}</CardTitle>
                   <CardDescription>
-                    Sold by {listing.seller_username || `User #${listing.user_id}`}
+                    Sold by User #{listing.user_id}
                   </CardDescription>
                 </div>
                 <span
@@ -124,18 +124,18 @@ function ListingDetailPage() {
               <section className="grid gap-4 rounded-2xl bg-muted/40 p-5 sm:grid-cols-2">
                 <div>
                   <p className="text-sm font-medium">Listing ID</p>
-                  <p className="text-sm text-muted-foreground">#{listing.id}</p>
+                  <p className="text-sm text-muted-foreground">#{listing.ID}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Seller</p>
                   <p className="text-sm text-muted-foreground">
-                    {listing.seller_username || `User #${listing.user_id}`}
+                    User #{listing.user_id}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Posted</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(listing.created_at).toLocaleDateString("en-US", {
+                    {new Date(listing.CreatedAt).toLocaleDateString("en-US", {
                       month: "long",
                       day: "numeric",
                       year: "numeric",
@@ -181,7 +181,7 @@ function ListingDetailPage() {
 
                   try {
                     setIsBuying(true);
-                    const updated = await buyListing(listing.id);
+                    const updated = await buyListing(listing.ID);
                     setListing(updated);
                     toast.success("Item purchased successfully.");
                   } catch (err) {

@@ -511,12 +511,11 @@ function ListingsPage() {
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {listings.map((listing) => {
                   const isSold = listing.status === "sold";
-                  const sellerName =
-                    listing.seller_username || `User #${listing.user_id}`;
+                  const sellerName = `User #${listing.user_id}`;
 
                   return (
                     <Card
-                      key={listing.id}
+                      key={listing.ID}
                       className="group border-primary/10 transition-transform duration-200 hover:-translate-y-1"
                     >
                       <CardHeader className="space-y-3">
@@ -560,7 +559,7 @@ function ListingsPage() {
                         </p>
                       </CardContent>
                       <CardFooter className="flex items-center justify-between gap-3">
-                        <Link to={`/listings/${listing.id}`} className="flex-1">
+                        <Link to={`/listings/${listing.ID}`} className="flex-1">
                           <Button className="w-full" variant={isSold ? "outline" : "default"}>
                             View Details
                           </Button>
@@ -576,10 +575,10 @@ function ListingsPage() {
                               }
 
                               try {
-                                const updated = await buyListing(listing.id);
+                                const updated = await buyListing(listing.ID);
                                 setListings((current) =>
                                   current.map((item) =>
-                                    item.id === listing.id ? updated : item,
+                                    item.ID === listing.ID ? updated : item,
                                   ),
                                 );
                                 toast.success("Purchase confirmed.");
