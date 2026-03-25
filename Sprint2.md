@@ -37,15 +37,56 @@
   - `cd frontend && npm test`
 
 ### PR / Branch
-- My work is submitted via PR: **#39** (`test/cypress-user-info`)
+- My work is submitted via PR: **#45** (`test/cypress-user-info`)
 
 ---
 
-## [Xueni Huang] (Frontend)
-- (Fill in your Sprint 2 work here)
-- Frontend pages/features completed:
-- Cypress / Unit tests added:
-- PR(s):
+## Xueni Huang (Frontend)
+### Frontend–Backend Integration (Listings + Login)
+- Verified backend is running locally on `http://localhost:8080`:
+  - `cd backend && go mod tidy && go run .`
+- Verified frontend is running locally on `http://127.0.0.1:5173`:
+  - `cd frontend && npm install && npm run dev`
+- Integrated frontend login flow with backend authentication endpoints:
+  - `POST /api/login`
+  - `GET /api/user`
+- Aligned frontend listing requests with backend listing endpoints:
+  - `GET /api/listings`
+  - `GET /api/listings/:id`
+  - `POST /api/listings`
+  - `PUT /api/listings/:id`
+- Updated frontend listing types to match backend response fields such as `ID`, `CreatedAt`, and `UpdatedAt`
+
+### Frontend Pages / Features Completed
+- Implemented the **Listings** marketplace page:
+  - Added listing cards, search input, category navigation, sorting, and status filters
+- Added authenticated **Sell an Item** flow:
+  - Users can open a dialog, enter title/description/price, and create a listing through the protected API
+- Added purchase flow on both marketplace and listing detail pages:
+  - Guests are redirected to login before buying
+  - Authenticated users can update a listing to `sold`
+- Improved logged-in marketplace experience:
+  - Current user information is loaded and displayed on the listings page
+
+### Frontend Testing
+#### Cypress E2E Test
+- Added Cypress E2E test for listings and listing detail flows:
+  - File: `frontend/cypress/e2e/listings.cy.ts`
+- What it checks:
+  - Guest browsing of listings
+  - Category, search state, sort, and status filter interactions
+  - Redirect to login when unauthenticated users try to buy
+  - Authenticated listing creation
+  - Successful purchase on listing detail page
+  - Proper frontend handling of backend `401` authorization errors
+- How to run:
+  - `cd frontend && npx cypress run --spec cypress/e2e/listings.cy.ts`
+
+
+### PR / Branch
+- My work is submitted on branch:  **#39** `feature/listing-login`
+
+---
 
 ---
 
@@ -70,13 +111,12 @@
 - Xiangyu Zhou:
   - `frontend/cypress/e2e/user_info.cy.ts`
 - [Xueni Huang]:
-  - (Add your Cypress test file path here)
+  - `frontend/cypress/e2e/listings.cy.ts`
 
 ## Unit Tests
 - Xiangyu Zhou:
   - `frontend/src/__tests__/smoke.test.ts`
-- [Xueni Huang]:
-  - (Add your unit test file path here)
+  
 
 ---
 
