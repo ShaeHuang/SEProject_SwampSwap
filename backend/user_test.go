@@ -16,7 +16,7 @@ func setupRouter() *gin.Engine {
 
 	ConnectDatabase()
 	DB.Migrator().DropTable(&User{}, &Listing{})
-    DB.AutoMigrate(&User{}, &Listing{})
+	DB.AutoMigrate(&User{}, &Listing{})
 	r := gin.Default()
 
 	public := r.Group("/api")
@@ -54,7 +54,7 @@ func TestUpdateUser(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// Login to get token
-	loginBody := []byte(`{"username":"kabir","password":"oldpass"}`)
+	loginBody := []byte(`{"id":"kabir","password":"oldpass"}`)
 	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
 	reqLogin.Header.Set("Content-Type", "application/json")
 	wLogin := httptest.NewRecorder()
@@ -110,7 +110,7 @@ func TestGetUserPublicWithStats(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// Login to get token
-	loginBody := []byte(`{"username":"seller","password":"pass1234"}`)
+	loginBody := []byte(`{"id":"seller","password":"pass1234"}`)
 	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
 	reqLogin.Header.Set("Content-Type", "application/json")
 	wLogin := httptest.NewRecorder()
@@ -155,4 +155,7 @@ func TestGetUserPublicWithStats(t *testing.T) {
 	if stats["itemsSold"] != float64(1) {
 		t.Fatalf("Expected itemsSold 1, got %v", stats["itemsSold"])
 	}
+
+	DB.Unscoped().Where("ID BETWEEN ? AND ?", 1, 1000).Delete(&User{})
+	DB.Unscoped().Where("ID BETWEEN ? AND ?", 1, 1000).Delete(&Listing{})
 }
