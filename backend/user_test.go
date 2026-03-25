@@ -37,8 +37,166 @@ func setupRouter() *gin.Engine {
 }
 
 // -----------------------
+// TEST: REGISTER NEW USER
+// -----------------------
+func TestRegisterUser(t *testing.T) {
+	r := setupRouter()
+
+	// Register user
+	body := []byte(`{"username":"awinney","password":"helloworld"}`)
+	req := httptest.NewRequest("POST", "/api/register", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	wRegister := httptest.NewRecorder()
+	r.ServeHTTP(wRegister, req)
+
+	var registerResp map[string]string
+	json.Unmarshal(wRegister.Body.Bytes(), &registerResp)
+
+	expected_response := "{\"message\":\"registration was successful\"}"
+	if wRegister.Body.String() != expected_response {
+		t.Fatalf("Expected %s, got %s.", expected_response, wRegister.Body.String())
+	}
+
+}
+
+// -----------------------
+// TEST: LOGIN NEW USER
+// -----------------------
+func TestLoginUser(t *testing.T) {
+	r := setupRouter()
+
+	// Register user
+	body := []byte(`{"username":"awinney","password":"helloworld"}`)
+	req := httptest.NewRequest("POST", "/api/register", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	wRegister := httptest.NewRecorder()
+	r.ServeHTTP(wRegister, req)
+
+	var registerResp map[string]string
+	json.Unmarshal(wRegister.Body.Bytes(), &registerResp)
+
+	expectedResponse := "{\"message\":\"registration was successful\"}"
+	if wRegister.Body.String() != expectedResponse {
+		t.Fatalf("Expected %s, got %s.", expectedResponse, wRegister.Body.String())
+	}
+
+	// Login to get token
+	loginBody := []byte(`{"id":"awinney","password":"helloworld"}`)
+	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
+	reqLogin.Header.Set("Content-Type", "application/json")
+	wLogin := httptest.NewRecorder()
+	r.ServeHTTP(wLogin, reqLogin)
+
+	var loginResp map[string]string
+	json.Unmarshal(wLogin.Body.Bytes(), &loginResp)
+
+	var token string
+	for _, v := range loginResp {
+		token = v
+	}
+
+	if token[:3] != "eyJ" { //JWT format follows this rule
+		t.Fatalf("Expected a token, got none back")
+	}
+}
+
+// -----------------------
+// TEST: FAILED LOGIN NEW USER
+// -----------------------
+func TestFailedLoginUser(t *testing.T) {
+	r := setupRouter()
+
+	// Register user
+	body := []byte(`{"username":"awinney","password":"helloworld"}`)
+	req := httptest.NewRequest("POST", "/api/register", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	wRegister := httptest.NewRecorder()
+	r.ServeHTTP(wRegister, req)
+
+	var registerResp map[string]string
+	json.Unmarshal(wRegister.Body.Bytes(), &registerResp)
+
+	expectedResponse := "{\"message\":\"registration was successful\"}"
+	if wRegister.Body.String() != expectedResponse {
+		t.Fatalf("Expected %s, got %s.", expectedResponse, wRegister.Body.String())
+	}
+
+	// Login to get token
+	loginBody := []byte(`{"id":"awinney","password":"wrongpassword"}`) // Incorrect password here
+	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
+	reqLogin.Header.Set("Content-Type", "application/json")
+	wLogin := httptest.NewRecorder()
+	r.ServeHTTP(wLogin, reqLogin)
+
+	var loginResp map[string]string
+	json.Unmarshal(wLogin.Body.Bytes(), &loginResp)
+
+	var token string
+	for _, v := range loginResp {
+		token = v
+	}
+
+	if token[:3] == "eyJ" { //JWT format follows this rule
+		t.Fatalf("Expected no token, got one back")
+	}
+}
+
+// -----------------------
 // TEST: GET USER PUBLIC
 // -----------------------
+func TestGetUser(t *testing.T) {
+	r := setupRouter()
+
+	// Register user
+	body := []byte(`{"username":"awinney","password":"helloworld"}`)
+	req := httptest.NewRequest("POST", "/api/register", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	wRegister := httptest.NewRecorder()
+	r.ServeHTTP(wRegister, req)
+
+	var registerResp map[string]string
+	json.Unmarshal(wRegister.Body.Bytes(), &registerResp)
+
+	expectedResponse := "{\"message\":\"registration was successful\"}"
+	if wRegister.Body.String() != expectedResponse {
+		t.Fatalf("Expected %s, got %s.", expectedResponse, wRegister.Body.String())
+	}
+
+	// Login to get token
+	loginBody := []byte(`{"id":"awinney","password":"helloworld"}`)
+	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
+	reqLogin.Header.Set("Content-Type", "application/json")
+	wLogin := httptest.NewRecorder()
+	r.ServeHTTP(wLogin, reqLogin)
+
+	var loginResp map[string]string
+	json.Unmarshal(wLogin.Body.Bytes(), &loginResp)
+
+	var token string
+	for _, v := range loginResp {
+		token = v
+	}
+
+	if token[:3] != "eyJ" { //JWT format follows this rule
+		t.Fatalf("Expected a token, got none back")
+	}
+
+	getBody := []byte(`{}`)
+	reqGet := httptest.NewRequest("GET", "/api/user/1", bytes.NewBuffer(getBody))
+	reqGet.Header.Set("Content-Type", "application/json")
+	wGet := httptest.NewRecorder()
+	r.ServeHTTP(wGet, reqGet)
+
+	var getResp map[string]interface{}
+	json.Unmarshal(wGet.Body.Bytes(), &getResp)
+
+	getRespString := wGet.Body.String()
+	responseTail := getRespString[len(getRespString)-21 : len(getRespString)-1] //Get username of user
+	expectedResponse = "\"username\":\"awinney\""
+	if responseTail != expectedResponse {
+		t.Fatalf("Expected response '%s', got %s", expectedResponse, responseTail)
+	}
+}
 
 // -----------------------
 // TEST: UPDATE USER
