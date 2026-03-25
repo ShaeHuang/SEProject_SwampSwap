@@ -22,21 +22,27 @@ func CurrentUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": u})
 }
 
-type UserInput struct {
-	Username string `json:"username" binding:"required"`
+type LoginInput struct {
+	ID       string `json:"id" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
+type RegisterInput struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+	Email    string `json:"email"`
+}
+
 func Login(c *gin.Context) {
-	var input UserInput
+	var input LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil { //Binds JSON to input type
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	token, err := LoginCheck(input.Username, input.Password) //Check if login is valid
+	token, err := LoginCheck(input.ID, input.Password) //Check if login is valid
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "incorrect username/password"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "incorrect id/password"})
 		return
 	}
 
@@ -44,16 +50,17 @@ func Login(c *gin.Context) {
 }
 
 func Register(c *gin.Context) {
-	var input UserInput
-	if err := c.ShouldBindJSON(&input); err != nil { //Binds JSON to input type
+	var input RegisterInput
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	u := User{} //Create new user instance
+	u := User{}
 	u.Username = input.Username
 	u.Password = input.Password
-	_, err := u.SaveUser() //Save new user to database
+	u.Email = input.Email
+	_, err := u.SaveUser()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

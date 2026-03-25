@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+
 	// "strconv"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +18,7 @@ type Listing struct {
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 	UserID      uint    `json:"user_id"`
+	Status      string  `json:"status" gorm:"default:available"`
 }
 
 // ----------------------------
