@@ -19,9 +19,9 @@ func main() {
 	// CORS Configuration
 	r.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
-			"http://localhost:3000",  // Create React App
-			"http://localhost:3001",  
-			"http://localhost:5173",  // Vite
+			"http://localhost:3000", // Create React App
+			"http://localhost:3001",
+			"http://localhost:5173", // Vite
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
@@ -36,6 +36,7 @@ func main() {
 	r.GET("/api/listings", GetListings)
 	r.GET("/api/listings/:id", GetListingByID)
 	r.GET("/api/user/:id", GetUserPublic)
+	r.GET("/api/search", SearchQuery)
 
 	// PROTECTED ROUTES
 	protected := r.Group("/api")

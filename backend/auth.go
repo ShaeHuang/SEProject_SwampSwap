@@ -21,8 +21,9 @@ func CurrentUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": u})
 }
+
 type LoginInput struct {
-	Username string `json:"username" binding:"required"`
+	ID       string `json:"id" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -39,9 +40,9 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := LoginCheck(input.Username, input.Password) //Check if login is valid
+	token, err := LoginCheck(input.ID, input.Password) //Check if login is valid
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "incorrect username/password"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "incorrect id/password"})
 		return
 	}
 

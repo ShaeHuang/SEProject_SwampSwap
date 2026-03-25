@@ -33,7 +33,7 @@ echo ""
 echo "${YELLOW}Test 2: Login and Get Token${NC}"
 RESPONSE=$(curl -s -X POST $BASE_URL/api/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"testuser123","password":"password123"}')
+  -d '{"id":"testuser123","password":"password123"}')
 
 TOKEN=$(echo $RESPONSE | grep -o '"login successful, user token:":"[^"]*"' | cut -d'"' -f4)
 
@@ -48,7 +48,7 @@ echo ""
 
 # Test 3: Create listing (Protected - Should succeed with token)
 echo "${YELLOW}Test 3: Create Listing (Authenticated)${NC}"
-RESPONSE=$(curl -s -X POST $BASE_URL/api/admin/listings \
+RESPONSE=$(curl -s -X POST $BASE_URL/api/listings \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"title":"iPhone 13","description":"Barely used, great condition","price":500}')
@@ -89,7 +89,7 @@ echo ""
 
 # Test 6: Update listing (Protected - Owner only)
 echo "${YELLOW}Test 6: Update Listing (Owner)${NC}"
-RESPONSE=$(curl -s -X PUT $BASE_URL/api/admin/listings/$LISTING_ID \
+RESPONSE=$(curl -s -X PUT $BASE_URL/api/listings/$LISTING_ID \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"title":"iPhone 13 Pro","description":"Like new condition","price":600}')
@@ -104,7 +104,7 @@ echo ""
 
 # Test 7: Try to update without token (Should fail)
 echo "${YELLOW}Test 7: Update Listing Without Auth (Should Fail)${NC}"
-RESPONSE=$(curl -s -X PUT $BASE_URL/api/admin/listings/$LISTING_ID \
+RESPONSE=$(curl -s -X PUT $BASE_URL/api/listings/$LISTING_ID \
   -H "Content-Type: application/json" \
   -d '{"title":"Hacked","description":"Should not work","price":1}')
 
@@ -117,7 +117,7 @@ echo ""
 
 # Test 8: Create second listing for testing
 echo "${YELLOW}Test 8: Create Second Listing${NC}"
-curl -s -X POST $BASE_URL/api/admin/listings \
+curl -s -X POST $BASE_URL/api/listings \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"title":"MacBook Pro","description":"2021 model","price":1200}' > /dev/null
@@ -138,7 +138,7 @@ echo ""
 
 # Test 10: Delete listing (Protected - Owner only)
 echo "${YELLOW}Test 10: Delete Listing (Owner)${NC}"
-RESPONSE=$(curl -s -X DELETE $BASE_URL/api/admin/listings/$LISTING_ID \
+RESPONSE=$(curl -s -X DELETE $BASE_URL/api/listings/$LISTING_ID \
   -H "Authorization: Bearer $TOKEN")
 
 if [[ $RESPONSE == *"deleted successfully"* ]]; then
@@ -162,7 +162,7 @@ echo ""
 
 # Test 12: Try to delete without token (Should fail)
 echo "${YELLOW}Test 12: Delete Without Auth (Should Fail)${NC}"
-RESPONSE=$(curl -s -X DELETE $BASE_URL/api/admin/listings/2)
+RESPONSE=$(curl -s -X DELETE $BASE_URL/api/listings/2)
 
 if [[ $RESPONSE == *"unauthorized"* ]]; then
     echo "${GREEN}✓ Correctly rejected unauthorized delete${NC}"

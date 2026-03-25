@@ -1,5 +1,3 @@
-
-
 # Database files
 *.db
 *.sqlite
@@ -41,7 +39,3 @@ go.work
 # Temporary files
 tmp/
 temp/
-
-
-user_test.go
-user_test.go
