@@ -103,12 +103,20 @@
 ### User Login API Change
 - Overhauled the login API call in ``auth.go`` to support either an email or a username as the ID credential as requested by the frontend team.
   - The JSON input for "username" was changed to "id" to reflect this change.
+ 
+### Unit Testing
+- I added a couple of unit tests to verify the API functionality in ``user_test.go``, including these tests:
+  - ``TestRegisterUser()``
+  - ``TestLoginUser()``
+  - ``TestFailedLoginUser()``
+  - ``TestGetUser()``
 
 ### Bug Fixes and Cleaning up Backend Code
 - Various bug fixes for the backend code, including:
-  - Changed some unit tests that were failing due to my API changes, 
+  - Changed some unit tests that were failing due to my API changes.
   - Allowed the frontend to change the status of a listing through the ``PUT api/listings`` call in ``listings.go``, as it was causing the frontend team some issues due to the lack of functionality.
-- PR(s): #42, #47, #48
+  - Fixed some formatting issues in ``test_listings.sh``.
+- Main PR(s): #42, #47, #48, #51
 
 ---
 
@@ -135,15 +143,27 @@
 ---
 
 # 3) Backend Unit Tests Summary (Team)
-### user_listings_test.go
+### user_test.go
 - To run, simply run ``go test .`` in the ``backend`` folder.
 - Unit Tests:
+  - ``TestRegisterUser()``
+  - ``TestLoginUser()``
+  - ``TestFailedLoginUser()``
+  - ``TestGetUser()``
   - ``TestUpdateUser()``
-    - This test first creates a user in the database with ``POST api/register``, then logs them in with ``POST api/login ``, outputting a token.
-    - This token is used to call ``PUT api/user`` to update the created user.
-    - The test then verifies that the user credentials were updated.
   - ``TestGetUserPublicWithStats()``
-    - This test creates and logs in a user just like ``TestUpdateUser()``.
-    - It then calls ``POST api/listings`` to create two new listings from the new user, with one of them being marked as sold.
-    - The user's information is grabbed through ``GET api/user/1``, and the test checks their listings, verifying that they have two items posted and one sold item.
-    - The database is wiped at the end to make repeated testing simpler.
+### test_listings.sh
+- To run, boot up the server in one terminal with ``go run .`` in the ``backend`` folder, then in another Bash terminal, do ``chmod +x test_listings.sh`` if needed, then ``bash test_listings.sh`` to run the tests.
+- Unit Tests:
+  - Test 1: Register User
+  - Test 2: Login and Get Token
+  - Test 3: Create Listing (Authenticated)
+  - Test 4: Get All Listings (Public)
+  - Test 5: Get Listing by ID (Public)
+  - Test 6: Update Listing (Owner)
+  - Test 7: Update Listing Without Auth (Should Fail)
+  - Test 8: Create Second Listing
+  - Test 9: Verify Multiple Listings
+  - Test 10: Delete Listing (Owner)
+  - Test 11: Verify Deletion
+  - Test 12: Delete Without Auth (Should Fail)
