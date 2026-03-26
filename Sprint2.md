@@ -99,10 +99,24 @@
 ---
 
 ## [Kabeer Latane] (Backend)
-- (Fill in your Sprint 2 work here)
-- Backend endpoints implemented/updated:
-- Backend unit tests added:
-- PR(s):
+
+
+### Work Completed
+- Implemented `GET /api/user/:id` endpoint returning user profile with computed stats (itemsPosted, itemsSold), matching the frontend `UserInfo` TypeScript type exactly
+- Added `Email`, `Avatar`, `Bio` fields to the User model
+- Added `Status` field to the Listing model (defaults to "available", tracks "sold")
+- Implemented `PUT /api/user` protected endpoint for profile updates (username, password, email, avatar, bio)
+- Split auth input into `LoginInput` and `RegisterInput`, registration now accepts email
+- Secured password field with `json:"-"` tag to prevent accidental exposure in any API response
+- Registered all missing routes in main.go (`GET /api/user/:id` public, `PUT /api/user` protected)
+- Created full backend API documentation (api.md)
+
+### Unit Tests (Backend)
+| Test | File | Description |
+|------|------|-------------|
+| TestGetUserPublic | user_test.go | Registers a user, fetches public profile, verifies response shape (id, username, email, joinedAt, stats), confirms password is excluded |
+| TestUpdateUser | user_test.go | Full auth flow: register, login, update profile fields (username, email, bio), verify changes persisted |
+| TestGetUserPublicWithStats | user_test.go | Creates listings, marks one as sold, verifies itemsPosted and itemsSold are computed correctly |
 
 ---
 
