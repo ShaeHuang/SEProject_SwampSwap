@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,6 +32,7 @@ func setupRouter() *gin.Engine {
 	{
 		protected.PUT("/user", UpdateUser)
 		protected.POST("/listings", CreateListing)
+		protected.PUT("/listings/:id/buy", BuyListing)
 	}
 	return r
 }
@@ -314,6 +315,114 @@ func TestGetUserPublicWithStats(t *testing.T) {
 		t.Fatalf("Expected itemsSold 1, got %v", stats["itemsSold"])
 	}
 
+	DB.Unscoped().Where("ID BETWEEN ? AND ?", 1, 1000).Delete(&User{})
+	DB.Unscoped().Where("ID BETWEEN ? AND ?", 1, 1000).Delete(&Listing{})
+}
+// -----------------------
+// TEST: BUY LISTING
+// -----------------------
+func TestBuyListing(t *testing.T) {
+	r := setupRouter()
+
+	// Register seller
+	sellerBody := []byte(`{"username":"seller1","password":"pass1234","email":"seller1@test.com"}`)
+	req := httptest.NewRequest("POST", "/api/register", bytes.NewBuffer(sellerBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	// Login seller
+	loginBody := []byte(`{"id":"seller1","password":"pass1234"}`)
+	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
+	reqLogin.Header.Set("Content-Type", "application/json")
+	wLogin := httptest.NewRecorder()
+	r.ServeHTTP(wLogin, reqLogin)
+
+	var sellerLoginResp map[string]string
+	json.Unmarshal(wLogin.Body.Bytes(), &sellerLoginResp)
+	var sellerToken string
+	for _, v := range sellerLoginResp {
+		sellerToken = v
+	}
+
+	// Seller creates a listing
+	listingBody := []byte(`{"title":"Old Bike","description":"works fine","price":50.0}`)
+	reqListing := httptest.NewRequest("POST", "/api/listings", bytes.NewBuffer(listingBody))
+	reqListing.Header.Set("Authorization", "Bearer "+sellerToken)
+	reqListing.Header.Set("Content-Type", "application/json")
+	wListing := httptest.NewRecorder()
+	r.ServeHTTP(wListing, reqListing)
+
+	if wListing.Code != 201 {
+		t.Fatalf("CreateListing: expected 201, got %d. Body: %s", wListing.Code, wListing.Body.String())
+	}
+
+	// Get listing ID from response
+	var createdListing map[string]interface{}
+	json.Unmarshal(wListing.Body.Bytes(), &createdListing)
+	listingID := int(createdListing["ID"].(float64))
+
+	// Register buyer
+	buyerBody := []byte(`{"username":"buyer1","password":"pass5678","email":"buyer1@test.com"}`)
+	reqBuyer := httptest.NewRequest("POST", "/api/register", bytes.NewBuffer(buyerBody))
+	reqBuyer.Header.Set("Content-Type", "application/json")
+	wBuyer := httptest.NewRecorder()
+	r.ServeHTTP(wBuyer, reqBuyer)
+
+	// Login buyer
+	buyerLoginBody := []byte(`{"id":"buyer1","password":"pass5678"}`)
+	reqBuyerLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(buyerLoginBody))
+	reqBuyerLogin.Header.Set("Content-Type", "application/json")
+	wBuyerLogin := httptest.NewRecorder()
+	r.ServeHTTP(wBuyerLogin, reqBuyerLogin)
+
+	var buyerLoginResp map[string]string
+	json.Unmarshal(wBuyerLogin.Body.Bytes(), &buyerLoginResp)
+	var buyerToken string
+	for _, v := range buyerLoginResp {
+		buyerToken = v
+	}
+
+	// TEST 1: Seller tries to buy own listing → expect 403
+	buyOwnReq := httptest.NewRequest("PUT", fmt.Sprintf("/api/listings/%d/buy", listingID), nil)
+	buyOwnReq.Header.Set("Authorization", "Bearer "+sellerToken)
+	buyOwnReq.Header.Set("Content-Type", "application/json")
+	wBuyOwn := httptest.NewRecorder()
+	r.ServeHTTP(wBuyOwn, buyOwnReq)
+
+	if wBuyOwn.Code != 403 {
+		t.Fatalf("Seller buying own listing: expected 403, got %d. Body: %s", wBuyOwn.Code, wBuyOwn.Body.String())
+	}
+
+	// TEST 2: Buyer purchases listing → expect 200
+	buyReq := httptest.NewRequest("PUT", fmt.Sprintf("/api/listings/%d/buy", listingID), nil)
+	buyReq.Header.Set("Authorization", "Bearer "+buyerToken)
+	buyReq.Header.Set("Content-Type", "application/json")
+	wBuy := httptest.NewRecorder()
+	r.ServeHTTP(wBuy, buyReq)
+
+	if wBuy.Code != 200 {
+		t.Fatalf("Buyer purchasing listing: expected 200, got %d. Body: %s", wBuy.Code, wBuy.Body.String())
+	}
+
+	var buyResp map[string]interface{}
+	json.Unmarshal(wBuy.Body.Bytes(), &buyResp)
+	if buyResp["status"] != "sold" {
+		t.Fatalf("Expected status 'sold', got '%v'", buyResp["status"])
+	}
+
+	// TEST 3: Buyer tries to buy already-sold listing → expect 400
+	buyAgainReq := httptest.NewRequest("PUT", fmt.Sprintf("/api/listings/%d/buy", listingID), nil)
+	buyAgainReq.Header.Set("Authorization", "Bearer "+buyerToken)
+	buyAgainReq.Header.Set("Content-Type", "application/json")
+	wBuyAgain := httptest.NewRecorder()
+	r.ServeHTTP(wBuyAgain, buyAgainReq)
+
+	if wBuyAgain.Code != 400 {
+		t.Fatalf("Buying sold listing: expected 400, got %d. Body: %s", wBuyAgain.Code, wBuyAgain.Body.String())
+	}
+
+	// Cleanup
 	DB.Unscoped().Where("ID BETWEEN ? AND ?", 1, 1000).Delete(&User{})
 	DB.Unscoped().Where("ID BETWEEN ? AND ?", 1, 1000).Delete(&Listing{})
 }

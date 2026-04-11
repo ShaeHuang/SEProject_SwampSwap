@@ -204,3 +204,54 @@ func DeleteListing(c *gin.Context) {
 		"message": "Listing deleted successfully.",
 	})
 }
+
+
+// ----------------------------
+// BUY LISTING (PUT /api/listings/:id/buy)
+// ----------------------------
+func BuyListing(c *gin.Context) {
+	id := c.Param("id")
+	var listing Listing
+
+	if err := DB.First(&listing, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Listing not found."})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Database error while fetching listing.",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Must be authenticated
+	userID, err := ExtractTokenID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized."})
+		return
+	}
+
+	// Buyer must NOT be the owner
+	if listing.UserID == userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You cannot buy your own listing."})
+		return
+	}
+
+	// Must still be available
+	if listing.Status != "available" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "This listing has already been sold."})
+		return
+	}
+
+	listing.Status = "sold"
+	if err := DB.Save(&listing).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Database error while updating listing.",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, listing)
+}

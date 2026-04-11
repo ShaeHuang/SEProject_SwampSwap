@@ -47,6 +47,7 @@ func main() {
 		protected.PUT("/listings/:id", UpdateListing)
 		protected.DELETE("/listings/:id", DeleteListing)
 		protected.PUT("/user", UpdateUser)
+		protected.PUT("/listings/:id/buy", BuyListing)
 	}
 
 	err := r.Run(":8080")
