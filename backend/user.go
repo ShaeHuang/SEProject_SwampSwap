@@ -98,6 +98,28 @@ func GetUserPublic(c *gin.Context) {
 	})
 }
 
+func GetCurrentUserListings(c *gin.Context) {
+	uid, err := ExtractTokenID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var listings []Listing
+	if err := DB.Where("user_id = ?", uid).Order("created_at desc").Find(&listings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Database error: cannot fetch user listings.",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    listings,
+	})
+}
+
 type UpdateUserInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`

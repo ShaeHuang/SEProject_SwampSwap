@@ -31,6 +31,7 @@ type RegisterInput struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 	Email    string `json:"email"`
+	Avatar   string `json:"avatar"`
 }
 
 func Login(c *gin.Context) {
@@ -60,6 +61,7 @@ func Register(c *gin.Context) {
 	u.Username = input.Username
 	u.Password = input.Password
 	u.Email = input.Email
+	u.Avatar = input.Avatar
 	_, err := u.SaveUser()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

@@ -11,9 +11,12 @@ Returns all active listings.
   {
     "ID": 1,
     "title": "iPhone 13",
-    "description": "Barely used",
+    "description": "Includes charger and original box",
     "price": 500,
+    "category": "Digital Product",
+    "condition": "Like new",
     "user_id": 1,
+    "status": "available",
     "CreatedAt": "2026-02-22T15:25:00Z"
   }
 ]
@@ -27,7 +30,31 @@ Returns a single listing by ID.
 
 ## Protected Endpoints (Require JWT)
 
-### POST /api/admin/listings
+### GET /api/user/listings
+Return the authenticated user's own listings for profile management.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response (200 OK):**
+```json
+{
+  "message": "success",
+  "data": [
+    {
+      "ID": 1,
+      "title": "Desk Lamp",
+      "description": "Apartment pickup",
+      "price": 25,
+      "category": "Furniture",
+      "condition": "Used",
+      "user_id": 1,
+      "status": "available"
+    }
+  ]
+}
+```
+
+### POST /api/listings
 Create a new listing.
 
 **Headers:** `Authorization: Bearer <token>`
@@ -36,14 +63,16 @@ Create a new listing.
 ```json
 {
   "title": "iPhone 13",
-  "description": "Barely used",
-  "price": 500
+  "description": "Includes charger and original box",
+  "price": 500,
+  "category": "Digital Product",
+  "condition": "Like new"
 }
 ```
 
 **Response (201 Created):** Created listing object
 
-### PUT /api/admin/listings/:id
+### PUT /api/listings/:id
 Update a listing (owner only).
 
 **Headers:** `Authorization: Bearer <token>`
@@ -53,7 +82,7 @@ Update a listing (owner only).
 **Response (200 OK):** Updated listing
 **Response (401 Unauthorized):** Not owner or no auth
 
-### DELETE /api/admin/listings/:id
+### DELETE /api/listings/:id
 Delete a listing (owner only).
 
 **Headers:** `Authorization: Bearer <token>`

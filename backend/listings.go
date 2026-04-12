@@ -3,8 +3,6 @@ package main
 import (
 	"net/http"
 
-	// "strconv"
-
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -17,8 +15,72 @@ type Listing struct {
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
+	Category    string  `json:"category"`
+	Condition   string  `json:"condition"`
 	UserID      uint    `json:"user_id"`
 	Status      string  `json:"status" gorm:"default:available"`
+}
+
+type ListingResponse struct {
+	Listing
+	SellerName   string `json:"seller_name"`
+	SellerAvatar string `json:"seller_avatar"`
+}
+
+type UpdateListingInput struct {
+	Title       *string  `json:"title"`
+	Description *string  `json:"description"`
+	Price       *float64 `json:"price"`
+	Category    *string  `json:"category"`
+	Condition   *string  `json:"condition"`
+	Status      *string  `json:"status"`
+}
+
+func buildListingResponses(listings []Listing) []ListingResponse {
+	if len(listings) == 0 {
+		return []ListingResponse{}
+	}
+
+	seenUserIDs := make(map[uint]struct{}, len(listings))
+	userIDs := make([]uint, 0, len(listings))
+	for _, listing := range listings {
+		if _, exists := seenUserIDs[listing.UserID]; exists {
+			continue
+		}
+		seenUserIDs[listing.UserID] = struct{}{}
+		userIDs = append(userIDs, listing.UserID)
+	}
+
+	var users []User
+	if err := DB.Select("id", "username", "avatar").Where("id IN ?", userIDs).Find(&users).Error; err != nil {
+		users = nil
+	}
+
+	sellerByID := make(map[uint]User, len(users))
+	for _, user := range users {
+		sellerByID[user.ID] = user
+	}
+
+	responses := make([]ListingResponse, 0, len(listings))
+	for _, listing := range listings {
+		seller := sellerByID[listing.UserID]
+		responses = append(responses, ListingResponse{
+			Listing:      listing,
+			SellerName:   seller.Username,
+			SellerAvatar: seller.Avatar,
+		})
+	}
+
+	return responses
+}
+
+func buildListingResponse(listing Listing) ListingResponse {
+	responses := buildListingResponses([]Listing{listing})
+	if len(responses) == 0 {
+		return ListingResponse{Listing: listing}
+	}
+
+	return responses[0]
 }
 
 // ----------------------------
@@ -57,7 +119,7 @@ func CreateListing(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, input)
+	c.JSON(http.StatusCreated, buildListingResponse(input))
 }
 
 // ----------------------------
@@ -74,7 +136,7 @@ func GetListings(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, listings)
+	c.JSON(http.StatusOK, buildListingResponses(listings))
 }
 
 // ----------------------------
@@ -98,7 +160,7 @@ func GetListingByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, listing)
+	c.JSON(http.StatusOK, buildListingResponse(listing))
 }
 
 // ----------------------------
@@ -133,7 +195,7 @@ func UpdateListing(c *gin.Context) {
 	}
 
 	// Parse incoming data
-	var input Listing
+	var input UpdateListingInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid JSON format.",
@@ -143,10 +205,24 @@ func UpdateListing(c *gin.Context) {
 	}
 
 	// Update fields
-	listing.Title = input.Title
-	listing.Description = input.Description
-	listing.Price = input.Price
-	listing.Status = input.Status
+	if input.Title != nil {
+		listing.Title = *input.Title
+	}
+	if input.Description != nil {
+		listing.Description = *input.Description
+	}
+	if input.Price != nil {
+		listing.Price = *input.Price
+	}
+	if input.Category != nil {
+		listing.Category = *input.Category
+	}
+	if input.Condition != nil {
+		listing.Condition = *input.Condition
+	}
+	if input.Status != nil {
+		listing.Status = *input.Status
+	}
 
 	// Save to DB
 	if err := DB.Save(&listing).Error; err != nil {
@@ -157,7 +233,7 @@ func UpdateListing(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, listing)
+	c.JSON(http.StatusOK, buildListingResponse(listing))
 }
 
 // ----------------------------

@@ -11,3 +11,19 @@ export interface UserInfo {
     itemsSold: number;
   };
 }
+
+export interface CurrentUserProfile {
+  id: number;
+  username: string;
+  email: string;
+  avatar?: string;
+  bio?: string;
+  joinedAt: string;
+}
+
+export interface UpdateCurrentUserProfileData {
+  username?: string;
+  email?: string;
+  avatar?: string;
+  bio?: string;
+}

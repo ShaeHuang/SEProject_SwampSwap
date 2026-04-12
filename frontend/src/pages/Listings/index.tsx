@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
 
-import { getCurrentUser, type CurrentUser } from "@/api/auth";
+import { getCurrentUser, logout, type CurrentUser } from "@/api/auth";
 import {
-  buyListing,
   createListing,
   defaultListingSort,
   defaultListingStatus,
@@ -40,9 +39,12 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { listingCategories, listingConditions } from "@/types/listing";
 import type {
   CreateListingData,
   Listing,
+  ListingCategory,
+  ListingCondition,
   ListingFilterStatus,
   ListingSort,
 } from "@/types/listing";
@@ -60,19 +62,25 @@ const statusOptions: Array<{ label: string; value: ListingFilterStatus }> = [
   { label: "Sold only", value: "sold" },
 ];
 
-const categoryOptions = [
-  "Digital Product",
-  "Furniture",
-  "Cooking",
-  "Clothing",
-  "Sports",
-  "Cars",
-] as const;
-
-const getSellerAvatar = (sellerName: string, sellerId: number) =>
-  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(
-    sellerName || `user-${sellerId}`,
-  )}`;
+const renderAvatar = (
+  avatar: string | undefined,
+  label: string,
+  fallbackText: string,
+  className: string,
+) =>
+  avatar ? (
+    <img src={avatar} alt={label} className={className} />
+  ) : (
+    <div
+      aria-label={label}
+      className={cn(
+        className,
+        "flex items-center justify-center bg-primary/10 text-sm font-semibold text-primary",
+      )}
+    >
+      {fallbackText}
+    </div>
+  );
 
 const getListingImage = (title: string, price: number) => {
   const palette = [
@@ -127,6 +135,8 @@ function ListingsPage() {
     title: "",
     description: "",
     price: "",
+    category: "",
+    condition: "",
   });
 
   const search = searchParams.get("search") ?? "";
@@ -134,8 +144,10 @@ function ListingsPage() {
   const status =
     (searchParams.get("status") as ListingFilterStatus | null) ??
     defaultListingStatus;
-  const activeCategory = categoryOptions.find(
-    (category) => category.toLowerCase() === search.toLowerCase(),
+  const categoryFilter =
+    (searchParams.get("category") as ListingCategory | null) ?? null;
+  const activeCategory = listingCategories.find(
+    (category) => category === categoryFilter,
   );
 
   useEffect(() => {
@@ -143,7 +155,7 @@ function ListingsPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await listListings({ search, sort, status });
+        const data = await listListings({ search, sort, status, category: categoryFilter ?? undefined });
         setListings(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load listings");
@@ -153,7 +165,7 @@ function ListingsPage() {
     };
 
     void fetchListings();
-  }, [search, sort, status]);
+  }, [search, sort, status, categoryFilter]);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -177,12 +189,15 @@ function ListingsPage() {
     search?: string;
     sort?: ListingSort;
     status?: ListingFilterStatus;
+    category?: ListingCategory | null;
   }) => {
     const params = new URLSearchParams(searchParams);
 
     const nextSearch = next.search ?? search;
     const nextSort = next.sort ?? sort;
     const nextStatus = next.status ?? status;
+    const nextCategory =
+      next.category === undefined ? categoryFilter : next.category;
 
     if (nextSearch.trim()) {
       params.set("search", nextSearch.trim());
@@ -202,11 +217,48 @@ function ListingsPage() {
       params.delete("status");
     }
 
+    if (nextCategory) {
+      params.set("category", nextCategory);
+    } else {
+      params.delete("category");
+    }
+
     setSearchParams(params);
   };
 
   const resetFilters = () => {
     setSearchParams({});
+  };
+
+  const openSellerChat = (listing: Listing) => {
+    const draft = `Hi ${listing.seller_name || ""}, I'm interested in your listing "${listing.title}". Is it still available?`;
+    const params = new URLSearchParams({
+      userId: String(listing.user_id),
+      listingTitle: listing.title,
+      draft,
+    });
+    navigate(`/chat?${params.toString()}`);
+  };
+
+  const resolveCurrentUser = async () => {
+    if (currentUser) {
+      return currentUser;
+    }
+
+    try {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+      return user;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    setCurrentUser(null);
+    toast.success("Logged out successfully");
+    navigate("/login");
   };
 
   const handleSellSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -219,8 +271,14 @@ function ListingsPage() {
     }
 
     const price = Number.parseFloat(sellForm.price);
-    if (!sellForm.title.trim() || !sellForm.description.trim() || Number.isNaN(price)) {
-      toast.error("Please complete the title, description, and price fields.");
+    if (
+      !sellForm.title.trim() ||
+      !sellForm.description.trim() ||
+      !sellForm.category ||
+      !sellForm.condition.trim() ||
+      Number.isNaN(price)
+    ) {
+      toast.error("Please complete the title, category, condition, description, and price fields.");
       return;
     }
 
@@ -233,13 +291,21 @@ function ListingsPage() {
       title: sellForm.title.trim(),
       description: sellForm.description.trim(),
       price,
+      category: sellForm.category as ListingCategory,
+      condition: sellForm.condition as ListingCondition,
     };
 
     try {
       setIsSubmitting(true);
       const createdListing = await createListing(payload);
       setListings((current) => [createdListing, ...current]);
-      setSellForm({ title: "", description: "", price: "" });
+      setSellForm({
+        title: "",
+        description: "",
+        price: "",
+        category: "",
+        condition: "",
+      });
       setIsSellOpen(false);
       toast.success("Your item is now live.");
     } catch (err) {
@@ -255,6 +321,43 @@ function ListingsPage() {
       currency: "USD",
       maximumFractionDigits: 0,
     }).format(price);
+
+  const filteredListings = listings
+    .filter((listing) => {
+      if (status !== "all" && listing.status !== status) {
+        return false;
+      }
+
+      if (activeCategory && listing.category !== activeCategory) {
+        return false;
+      }
+
+      if (!search.trim()) {
+        return true;
+      }
+
+      const normalizedSearch = search.trim().toLowerCase();
+
+      return (
+        listing.title.toLowerCase().includes(normalizedSearch) ||
+        listing.description.toLowerCase().includes(normalizedSearch)
+      );
+    })
+    .sort((left, right) => {
+      if (sort === "price_asc") {
+        return left.price - right.price;
+      }
+
+      if (sort === "price_desc") {
+        return right.price - left.price;
+      }
+
+      if (sort === "oldest") {
+        return left.CreatedAt.localeCompare(right.CreatedAt);
+      }
+
+      return right.CreatedAt.localeCompare(left.CreatedAt);
+    });
 
   return (
     <div className="h-full bg-[linear-gradient(180deg,rgba(0,82,255,0.08),transparent_28%),linear-gradient(135deg,rgba(255,125,0,0.08),transparent_48%),var(--background)]">
@@ -283,14 +386,33 @@ function ListingsPage() {
                       Home
                     </Link>
                   </NavigationMenuItem>
-                  {categoryOptions.map((category) => {
+                  <NavigationMenuItem>
+                    <button
+                      type="button"
+                      onClick={() => updateFilters({ category: null })}
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        "h-10 px-5 text-base",
+                        !activeCategory
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                          : "bg-transparent text-muted-foreground",
+                      )}
+                    >
+                      All
+                    </button>
+                  </NavigationMenuItem>
+                  {listingCategories.map((category) => {
                     const isActive = activeCategory === category;
 
                     return (
                       <NavigationMenuItem key={category}>
                         <button
                           type="button"
-                          onClick={() => updateFilters({ search: category })}
+                          onClick={() =>
+                            updateFilters({
+                              category: isActive ? null : category,
+                            })
+                          }
                           className={cn(
                             navigationMenuTriggerStyle(),
                             "h-10 px-5 text-base",
@@ -324,22 +446,28 @@ function ListingsPage() {
 
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
               {currentUser ? (
-                <button
-                  type="button"
-                  onClick={() => navigate("/user-info")}
-                  className="flex items-center gap-3 rounded-2xl bg-background px-3 py-2 text-left transition hover:bg-accent"
-                >
-                  <img
-                    src={getSellerAvatar(currentUser.username, currentUser.id)}
-                    alt={currentUser.username}
-                    className="size-10 rounded-full border border-primary/10 bg-muted object-cover"
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-semibold">
-                      {currentUser.username}
-                    </p>
-                  </div>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/user-info")}
+                    className="flex items-center gap-3 rounded-2xl bg-background px-3 py-2 text-left transition hover:bg-accent"
+                  >
+                    {renderAvatar(
+                      currentUser.avatar,
+                      currentUser.username,
+                      currentUser.username.trim().charAt(0).toUpperCase() || "U",
+                      "size-10 rounded-full border border-primary/10 bg-muted object-cover",
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold">
+                        {currentUser.username}
+                      </p>
+                    </div>
+                  </button>
+                  <Button variant="outline" onClick={handleLogout}>
+                    Log Out
+                  </Button>
+                </div>
               ) : (
                 <Button variant="outline" onClick={() => navigate("/login")}>
                   Log In
@@ -374,6 +502,26 @@ function ListingsPage() {
                         />
                       </div>
                       <div className="space-y-2">
+                        <Label htmlFor="sell-category">Category</Label>
+                        <Select
+                          id="sell-category"
+                          value={sellForm.category}
+                          onChange={(event) =>
+                            setSellForm((current) => ({
+                              ...current,
+                              category: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Select a category</option>
+                          {listingCategories.map((category) => (
+                            <option key={category} value={category}>
+                              {category}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
                         <Label htmlFor="sell-description">Description</Label>
                         <Textarea
                           id="sell-description"
@@ -384,8 +532,28 @@ function ListingsPage() {
                               description: event.target.value,
                             }))
                           }
-                          placeholder="Condition, pickup spot, and anything the buyer should know."
+                          placeholder="Pickup spot, included accessories, and anything the buyer should know."
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sell-condition">Condition</Label>
+                        <Select
+                          id="sell-condition"
+                          value={sellForm.condition}
+                          onChange={(event) =>
+                            setSellForm((current) => ({
+                              ...current,
+                              condition: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Select item condition</option>
+                          {listingConditions.map((condition) => (
+                            <option key={condition} value={condition}>
+                              {condition}
+                            </option>
+                          ))}
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="sell-price">Price (USD)</Label>
@@ -498,7 +666,7 @@ function ListingsPage() {
                   <Button onClick={() => updateFilters({})}>Try again</Button>
                 </CardContent>
               </Card>
-            ) : listings.length === 0 ? (
+            ) : filteredListings.length === 0 ? (
               <Card>
                 <CardContent className="space-y-3 py-12 text-center">
                   <p className="text-lg font-medium">No items match these filters.</p>
@@ -509,9 +677,11 @@ function ListingsPage() {
               </Card>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {listings.map((listing) => {
+                {filteredListings.map((listing) => {
                   const isSold = listing.status === "sold";
-                  const sellerName = `User #${listing.user_id}`;
+                  const sellerName = listing.seller_name || `User #${listing.user_id}`;
+                  const sellerInitial = sellerName.trim().charAt(0).toUpperCase() || "U";
+                  const isOwnListing = currentUser?.id === listing.user_id;
 
                   return (
                     <Card
@@ -521,15 +691,19 @@ function ListingsPage() {
                       <CardHeader className="space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-3">
-                            <img
-                              src={getSellerAvatar(sellerName, listing.user_id)}
-                              alt={sellerName}
-                              className="size-12 rounded-full border border-primary/10 bg-muted object-cover"
-                            />
+                            {renderAvatar(
+                              listing.seller_avatar,
+                              sellerName,
+                              sellerInitial,
+                              "size-12 rounded-full border border-primary/10 bg-muted object-cover",
+                            )}
                             <div className="min-w-0">
                               <CardDescription className="truncate">
                                 Sold by {sellerName}
                               </CardDescription>
+                              <p className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                {listing.category}
+                              </p>
                             </div>
                           </div>
                           <span
@@ -554,6 +728,11 @@ function ListingsPage() {
                             className="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                           />
                         </div>
+                        <div className="flex flex-wrap gap-2">
+                          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                            Condition: {listing.condition}
+                          </span>
+                        </div>
                         <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
                           {listing.description}
                         </p>
@@ -567,6 +746,7 @@ function ListingsPage() {
                         {!isSold && (
                           <Button
                             variant="secondary"
+                            disabled={isOwnListing}
                             onClick={async () => {
                               if (!isAuthenticated()) {
                                 toast.error("Please log in before buying an item.");
@@ -574,24 +754,17 @@ function ListingsPage() {
                                 return;
                               }
 
-                              try {
-                                const updated = await buyListing(listing.ID);
-                                setListings((current) =>
-                                  current.map((item) =>
-                                    item.ID === listing.ID ? updated : item,
-                                  ),
-                                );
-                                toast.success("Purchase confirmed.");
-                              } catch (err) {
-                                toast.error(
-                                  err instanceof Error
-                                    ? err.message
-                                    : "Unable to buy this item",
-                                );
+                              const activeUser = await resolveCurrentUser();
+
+                              if (activeUser?.id === listing.user_id) {
+                                toast.error("You cannot buy your own listing.");
+                                return;
                               }
+
+                              openSellerChat(listing);
                             }}
                           >
-                            Buy
+                            {isOwnListing ? "Your Listing" : "Buy"}
                           </Button>
                         )}
                       </CardFooter>

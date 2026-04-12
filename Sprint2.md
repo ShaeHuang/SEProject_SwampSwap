@@ -82,9 +82,17 @@
 - How to run:
   - `cd frontend && npx cypress run --spec cypress/e2e/listings.cy.ts`
 
+<<<<<<< HEAD
 
 ### PR / Branch
 - My work is submitted on branch:  **#39** `feature/listing-login`
+=======
+#### Unit Test (Vitest)
+- No additional Vitest unit test was added in this sprint for this feature branch.
+
+### PR / Branch
+- My work is submitted on branch: `feature/listing-login`
+>>>>>>> 28b0a7c (feat: enhance listings, user profile, and chat-driven buyer flow)
 
 ---
 
@@ -146,13 +154,22 @@
 ## Cypress (E2E)
 - Xiangyu Zhou:
   - `frontend/cypress/e2e/user_info.cy.ts`
+<<<<<<< HEAD
 - [Xueni Huang]:
+=======
+- Xueni Huang:
+>>>>>>> 28b0a7c (feat: enhance listings, user profile, and chat-driven buyer flow)
   - `frontend/cypress/e2e/listings.cy.ts`
 
 ## Unit Tests
 - Xiangyu Zhou:
   - `frontend/src/__tests__/smoke.test.ts`
+<<<<<<< HEAD
   
+=======
+- Xueni Huang:
+  - No additional unit test added in this sprint
+>>>>>>> 28b0a7c (feat: enhance listings, user profile, and chat-driven buyer flow)
 
 ---
 
