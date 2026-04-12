@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getConversationWithUser, getConversations, sendMessage } from "@/api/message";
 import { getUserInfo } from "@/api/user";
@@ -6,17 +7,24 @@ import type { ConversationItem, Message } from "@/types/message";
 import type { UserInfo } from "@/types/user";
 
 function ChatPage() {
+  const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<string>("2");
+  const [selectedUserId, setSelectedUserId] = useState<string>(
+    searchParams.get("userId") ?? "",
+  );
   const [selectedUserInfo, setSelectedUserInfo] = useState<UserInfo | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [newMessage, setNewMessage] = useState(searchParams.get("draft") ?? "");
   const [loading, setLoading] = useState(false);
+  const draftListingTitle = searchParams.get("listingTitle");
 
   const loadConversations = async () => {
     setLoading(true);
     const convos = await getConversations();
     setConversations(convos);
+    if (!selectedUserId && convos.length > 0) {
+      setSelectedUserId(convos[0].userId);
+    }
     setLoading(false);
   };
 
@@ -37,6 +45,17 @@ function ChatPage() {
   }, []);
 
   useEffect(() => {
+    const nextUserId = searchParams.get("userId") ?? "";
+    const nextDraft = searchParams.get("draft") ?? "";
+
+    if (nextUserId) {
+      setSelectedUserId(nextUserId);
+    }
+
+    setNewMessage(nextDraft);
+  }, [searchParams]);
+
+  useEffect(() => {
     const updateThread = async () => {
       if (!selectedUserId) return;
       await loadThread(selectedUserId);
@@ -44,10 +63,28 @@ function ChatPage() {
     updateThread();
   }, [selectedUserId]);
 
-  const sortedConversations = useMemo(
-    () => conversations.sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime()),
-    [conversations]
-  );
+  const sortedConversations = useMemo(() => {
+    const items = [...conversations];
+
+    if (
+      selectedUserId &&
+      selectedUserInfo &&
+      !items.some((item) => item.userId === selectedUserId)
+    ) {
+      items.unshift({
+        userId: selectedUserId,
+        username: selectedUserInfo.username,
+        avatar: selectedUserInfo.avatar,
+        lastMessage: "Start a conversation about this item.",
+        lastAt: new Date().toISOString(),
+        unreadCount: 0,
+      });
+    }
+
+    return items.sort(
+      (a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime(),
+    );
+  }, [conversations, selectedUserId, selectedUserInfo]);
 
   const onSend = async () => {
     if (!selectedUserId || !newMessage.trim()) return;
@@ -98,6 +135,11 @@ function ChatPage() {
               <div>
                 <p className="font-medium">{selectedUserInfo.username}</p>
                 <p className="text-xs text-muted-foreground">{selectedUserInfo.email}</p>
+                {draftListingTitle && (
+                  <p className="text-xs text-muted-foreground">
+                    Discussing: {draftListingTitle}
+                  </p>
+                )}
               </div>
             </div>
           ) : (

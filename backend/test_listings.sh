@@ -45,7 +45,7 @@ echo "Test 3: Create Listing (Authenticated)"
 RESPONSE=$(curl -s -X POST $BASE_URL/api/listings \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"title":"iPhone 13","description":"Barely used, great condition","price":500}')
+  -d '{"title":"iPhone 13","description":"Includes charger and original box","price":500,"category":"Digital Product","condition":"Like new"}')
 
 LISTING_ID=$(echo $RESPONSE | grep -o '"ID":[0-9]*' | cut -d':' -f2)
 
@@ -61,8 +61,8 @@ echo ""
 echo "Test 4: Get All Listings (Public)"
 RESPONSE=$(curl -s -X GET $BASE_URL/api/listings)
 
-if [[ $RESPONSE == *"iPhone 13"* ]]; then
-    echo "✓ Successfully retrieved all listings${NC}"
+if [[ $RESPONSE == *"iPhone 13"* && $RESPONSE == *'"category":"Digital Product"'* && $RESPONSE == *'"condition":"Like new"'* ]]; then
+    echo "${GREEN}✓ Successfully retrieved all listings${NC}"
 else
     echo "✗ Get all listings failed: $RESPONSE${NC}"
     exit 1
@@ -73,8 +73,8 @@ echo ""
 echo "Test 5: Get Listing by ID (Public)"
 RESPONSE=$(curl -s -X GET $BASE_URL/api/listings/$LISTING_ID)
 
-if [[ $RESPONSE == *"iPhone 13"* ]]; then
-    echo "✓ Successfully retrieved listing by ID"
+if [[ $RESPONSE == *"iPhone 13"* && $RESPONSE == *'"category":"Digital Product"'* && $RESPONSE == *'"condition":"Like new"'* ]]; then
+    echo "${GREEN}✓ Successfully retrieved listing by ID${NC}"
 else
     echo "✗ Get listing by ID failed: $RESPONSE"
     exit 1
@@ -86,10 +86,10 @@ echo "Test 6: Update Listing (Owner)"
 RESPONSE=$(curl -s -X PUT $BASE_URL/api/listings/$LISTING_ID \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"title":"iPhone 13 Pro","description":"Like new condition","price":600}')
+  -d '{"title":"iPhone 13 Pro","description":"Includes case and charging cable","price":600,"category":"Digital Product","condition":"Open box"}')
 
-if [[ $RESPONSE == *"iPhone 13 Pro"* ]]; then
-    echo "✓ Successfully updated listing${NC}"
+if [[ $RESPONSE == *"iPhone 13 Pro"* && $RESPONSE == *'"condition":"Open box"'* ]]; then
+    echo "${GREEN}✓ Successfully updated listing${NC}"
 else
     echo "✗ Update listing failed: $RESPONSE${NC}"
     exit 1
@@ -114,8 +114,8 @@ echo "Test 8: Create Second Listing"
 curl -s -X POST $BASE_URL/api/listings \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
-  -d '{"title":"MacBook Pro","description":"2021 model","price":1200}' > /dev/null
-echo "✓ Second listing created"
+  -d '{"title":"MacBook Pro","description":"2021 model","price":1200,"category":"Digital Product","condition":"Used"}' > /dev/null
+echo "${GREEN}✓ Second listing created${NC}"
 echo ""
 
 # Test 9: Verify multiple listings returned
@@ -166,5 +166,5 @@ fi
 echo ""
 
 echo "=========================================="
-echo "All Tests Passed!"
+echo "${GREEN}All Tests Passed!${NC}"
 echo "=========================================="

@@ -62,6 +62,36 @@ export const createListing = async (
   return readJson<Listing>(response);
 };
 
+export const updateListing = async (
+  id: number,
+  data: CreateListingData,
+): Promise<Listing> => {
+  const response = await fetch(`${BASE_URL}/listings/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+
+  return readJson<Listing>(response);
+};
+
+export const deleteListing = async (id: number): Promise<void> => {
+  const response = await fetch(`${BASE_URL}/listings/${id}`, {
+    method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  if (!response.ok) {
+    const json = await response.json();
+    throw new Error(json.error ?? "Failed to delete listing");
+  }
+};
+
 export const buyListing = async (id: number): Promise<Listing> => {
   const response = await fetch(`${BASE_URL}/listings/${id}`, {
     method: "PUT",

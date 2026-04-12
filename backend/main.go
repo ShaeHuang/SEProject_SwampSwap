@@ -52,6 +52,7 @@ func main() {
 	protected.Use(JWTMiddleware())
 	{
 		protected.GET("/user", CurrentUser)
+		protected.GET("/user/listings", GetCurrentUserListings)
 		protected.POST("/listings", CreateListing)
 		protected.PUT("/listings/:id", UpdateListing)
 		protected.DELETE("/listings/:id", DeleteListing)

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 function HomePage() {
   const navigate = useNavigate();
+
   return (
     <>
     <div>
@@ -17,6 +18,7 @@ function HomePage() {
         <Button variant="outline" onClick={() => navigate("/listings")}>Post Item</Button>
         <Button variant="outline" onClick={() => navigate("/user-info")}>User Information</Button>
         <Button variant="outline" onClick={() => navigate("/chat")}>Messages</Button>
+        <Button variant="outline" onClick={() => navigate("/login")}>Log In</Button>
       </div>
     </div>
     </div>

@@ -4,6 +4,7 @@ export interface RegisterData {
   location: string;
   phoneNumber: string;
   password: string;
+  avatar: string;
 }
 
 export interface RegisterResponse {
@@ -32,9 +33,16 @@ export interface LoginData {
 export interface CurrentUser {
   id: number;
   username: string;
+  avatar?: string;
 }
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
+
+export const hasActiveSession = () => Boolean(localStorage.getItem("token"));
+
+export const logout = () => {
+  localStorage.removeItem("token");
+};
 
 export const register = async (
   data: RegisterData,
@@ -42,7 +50,12 @@ export const register = async (
   const response = await fetch(`${BASE_URL}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: data.userName, password: data.password, email: data.email }),
+    body: JSON.stringify({
+      username: data.userName,
+      password: data.password,
+      email: data.email,
+      avatar: data.avatar,
+    }),
   });
 
   const json = await response.json();
@@ -107,5 +120,6 @@ export const getCurrentUser = async (): Promise<CurrentUser> => {
   return {
     id: json.data.ID,
     username: json.data.username,
+    avatar: json.data.avatar,
   };
 };
