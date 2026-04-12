@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -13,8 +14,13 @@ import (
 var DB *gorm.DB
 
 func main() {
+	if err := os.MkdirAll("./avatars", 0755); err != nil {
+		panic(fmt.Sprintf("Failed to create uploads directory: %v", err))
+	}
+
 	ConnectDatabase()
 	r := gin.Default()
+	r.MaxMultipartMemory = 8 << 20
 
 	// CORS Configuration
 	r.Use(cors.New(cors.Config{
@@ -30,6 +36,8 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	r.Static("/files", "./avatars")
+
 	// PUBLIC ROUTES
 	r.POST("/api/register", Register)
 	r.POST("/api/login", Login)
@@ -37,6 +45,7 @@ func main() {
 	r.GET("/api/listings/:id", GetListingByID)
 	r.GET("/api/user/:id", GetUserPublic)
 	r.GET("/api/search", SearchQuery)
+	r.POST("/api/avatar", uploadAvatar)
 
 	// PROTECTED ROUTES
 	protected := r.Group("/api")
