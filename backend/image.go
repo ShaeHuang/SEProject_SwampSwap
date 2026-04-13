@@ -118,35 +118,16 @@ func uploadAvatar(c *gin.Context) {
 			Success: false,
 			Message: "No image file provided",
 		})
-		return
 	}
 
-	// Validate the file
-	if err := validateFile(file, imageConfig); err != nil {
-		c.JSON(http.StatusBadRequest, UploadResponse{
-			Success: false,
-			Message: err.Error(),
-		})
-		return
-	}
-
-	// Generate unique filename and save
-	uniqueName := generateUniqueFilename(file.Filename)
-	dst := filepath.Join("./avatars", uniqueName)
-
-	if err := c.SaveUploadedFile(file, dst); err != nil {
-		c.JSON(http.StatusInternalServerError, UploadResponse{
-			Success: false,
-			Message: "Failed to save file",
-		})
-		return
-	}
+	dst, uniqueName, file := processImage(c, file, "avatars")
 
 	old_avatar_path := u.Avatar
 	// Delete old avatar if it exists
 	os.Remove(old_avatar_path)
 	// Update avatar path
-	DB.Model(&u).Update("avatar", dst)
+	u.Avatar = dst
+	DB.Save(&u)
 
 	c.JSON(http.StatusOK, UploadResponse{
 		Success:  true,
@@ -155,4 +136,29 @@ func uploadAvatar(c *gin.Context) {
 		Size:     file.Size,
 		URL:      fmt.Sprintf("/avatars/%s", uniqueName),
 	})
+}
+
+func processImage(c *gin.Context, file *multipart.FileHeader, folder string) (string, string, *multipart.FileHeader) {
+	// Validate the file
+	if err := validateFile(file, imageConfig); err != nil {
+		c.JSON(http.StatusBadRequest, UploadResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return "", "", nil
+	}
+
+	// Generate unique filename and save
+	uniqueName := generateUniqueFilename(file.Filename)
+	dst := filepath.Join("./"+folder, uniqueName)
+
+	if err := c.SaveUploadedFile(file, dst); err != nil {
+		c.JSON(http.StatusInternalServerError, UploadResponse{
+			Success: false,
+			Message: "Failed to save file",
+		})
+		return "", "", nil
+	}
+
+	return dst, uniqueName, file
 }

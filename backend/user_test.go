@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
