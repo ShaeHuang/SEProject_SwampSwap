@@ -40,7 +40,6 @@ func main() {
 	}))
 
 	r.Static("/files", "./avatars")
-	r.Static("/files", "./listings")
 
 	// PUBLIC ROUTES
 	r.POST("/api/register", Register)
