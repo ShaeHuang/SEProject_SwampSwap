@@ -37,10 +37,49 @@
 ---
 
 ## Xueni Huang (Frontend)
-- [Fill in what Xueni did in Sprint 3]
-- Frontend tests added:
-  - Cypress:
-  - Unit tests:
+
+### Work Completed in Sprint 3
+- Added avatar support in registration and profile update flows.
+- Added `category` and `condition` fields for listings.
+- Enriched listing APIs with seller name and seller avatar.
+- Added current user listings support with `GET /api/user/listings`.
+- Updated listing edit logic to support partial updates.
+- Added frontend APIs for current user profile, current user listings, listing edit, and listing delete.
+- Added category filtering and richer listing display on the Marketplace page.
+- Updated the Buy flow to redirect users to chat with a prefilled draft message.
+- Prevented users from buying their own listings.
+- Reworked the User Profile page around the current authenticated user.
+- Added profile summary cards, avatar editing, and listing management on the profile page.
+- Supported creating, editing, and deleting listings directly from the profile page.
+- Added frontend tests for login, registration, marketplace, and user profile flows.
+
+### PR / Branch
+- My work is submitted via PR: #59
+
+## Frontend Tests (Cypress)
+
+- To validate the frontend behavior introduced in this update, Cypress end-to-end tests were added for the marketplace-related user flows. The test suite focuses on the Listings page and the Listing Detail page, covering both public access behavior and authenticated user interactions.
+- These tests are designed to verify that the UI responds correctly to user actions such as browsing by category, applying filters, attempting protected actions, and submitting new listings. The suite also checks that the frontend sends the expected API requests for key operations, especially after introducing the new listing fields `category` and `condition`.
+- To keep the tests deterministic and independent from backend database state, the Cypress tests use `cy.intercept()` to mock API responses. This allows the test suite to validate request payloads, route navigation, state updates, and access-control behavior in a controlled environment.
+- The Cypress test suite is executed from the frontend project.
+
+#### How to run
+- The Cypress configuration uses the following local test target: Base URL: http://localhost:5173
+- The primary end-to-end test file included in this update is: cypress/e2e/listings.cy.ts
+
+## Test Scenarios Covered
+
+1. Marketplace page rendering for guest users.This test verifies that unauthenticated users can open the Listings page and view the main marketplace interface, including listing cards, category navigation buttons, and the login entry point.
+
+2. Category-based filtering. This test verifies that selecting a category correctly filters the visible listings and updates the URL query string to reflect the active category selection.
+
+3. Filter clearing and reset behavior. This test verifies that the user can remove an active category filter by selecting `All`, and that the reset control restores the default filtering state for search, sort, and status.
+
+4. Sorting and status filter interaction. This test verifies that the sort dropdown and status dropdown update the page state correctly while continuing to fetch data from the public listings endpoint.
+
+5. Access control for protected buy actions. This test verifies that guest users attempting to buy an item are blocked from performing the protected action and are redirected to the login page with the appropriate feedback message.
+
+6. Authenticated listing creation with extended fields. This test verifies that a logged-in user can open the “Sell an Item” dialog, submit a new listing, and send the correct API payload including `title`, `description`, `price`, `category`, and `condition`.
 
 ---
 
@@ -64,7 +103,7 @@
 - Xiangyu Zhou:
   - `frontend/cypress/e2e/user_info.cy.ts`
 - Xueni Huang:
-  - [List unit test file(s)]
+  - 'frontend/cypress/e2e/listings.cy.ts'
 
 ---
 
