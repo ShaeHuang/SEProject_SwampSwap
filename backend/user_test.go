@@ -34,13 +34,14 @@ func setupRouter() *gin.Engine {
 	protected := r.Group("/api")
 	protected.Use(JWTMiddleware())
 	{
-		protected.PUT("/user", UpdateUser)
 		protected.GET("/user", CurrentUser)
 		protected.GET("/user/listings", GetCurrentUserListings)
 		protected.POST("/listings", CreateListing)
 		protected.PUT("/listings/:id", UpdateListing)
 		protected.DELETE("/listings/:id", DeleteListing)
+		protected.PUT("/user", UpdateUser)
 		protected.PUT("/listings/:id/buy", BuyListing)
+		protected.POST("/avatar", uploadAvatar)
 	}
 	return r
 }
@@ -541,7 +542,6 @@ func TestUpdateUserAvatar(t *testing.T) {
 	}
 	writer.Close()
 
-	//body := []byte(`{"username":"unupdated_avatar","password":"oldpass"}`)
 	req := httptest.NewRequest("POST", "/api/register", body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
@@ -757,5 +757,58 @@ func TestListingCategoryRoundTripImage(t *testing.T) {
 
 	if updated.Image == "" {
 		t.Fatalf("expected an image on the updated listing, but it has none")
+	}
+}
+
+// -----------------------
+// TEST: UPLOAD AVATAR
+// -----------------------
+func TestUploadAvatar(t *testing.T) {
+	r := setupRouter()
+
+	body := []byte(`{"username":"seller","password":"pass1234"}`)
+	req := httptest.NewRequest("POST", "/api/register", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	loginBody := []byte(`{"id":"seller","password":"pass1234"}`)
+	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
+	reqLogin.Header.Set("Content-Type", "application/json")
+	wLogin := httptest.NewRecorder()
+	r.ServeHTTP(wLogin, reqLogin)
+
+	var loginResp map[string]string
+	json.Unmarshal(wLogin.Body.Bytes(), &loginResp)
+	var token string
+	for _, v := range loginResp {
+		token = v
+	}
+
+	// Call PUT /api/avatar (protected route)
+	updateBody := &bytes.Buffer{}
+	updateWriter := multipart.NewWriter(updateBody)
+	updateFile, err := os.Open("test_imgs/bunny.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer updateFile.Close()
+	updatePart, err := updateWriter.CreateFormFile("avatar", "bunny.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(updatePart, updateFile); err != nil {
+		t.Fatal(err)
+	}
+	updateWriter.Close()
+	reqUpdate := httptest.NewRequest("POST", "/api/avatar", updateBody)
+	reqUpdate.Header.Set("Authorization", "Bearer "+token)
+	reqUpdate.Header.Set("Content-Type", updateWriter.FormDataContentType())
+
+	wUpdate := httptest.NewRecorder()
+	r.ServeHTTP(wUpdate, reqUpdate)
+
+	if wUpdate.Code != 200 {
+		t.Fatalf("Expected 200, got %d. Body: %s", wUpdate.Code, wUpdate.Body.String())
 	}
 }
