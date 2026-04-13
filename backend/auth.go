@@ -52,7 +52,7 @@ func Login(c *gin.Context) {
 
 func Register(c *gin.Context) {
 	var input RegisterInput
-	if err := c.ShouldBindJSON(&input); err != nil {
+	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -61,8 +61,12 @@ func Register(c *gin.Context) {
 	u.Username = input.Username
 	u.Password = input.Password
 	u.Email = input.Email
-	u.Avatar = input.Avatar
-	_, err := u.SaveUser()
+	file, err := c.FormFile("avatar")
+	if err == nil {
+		dst, _, _ := processImage(c, file, "avatars")
+		u.Avatar = dst
+	}
+	_, err = u.SaveUser()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

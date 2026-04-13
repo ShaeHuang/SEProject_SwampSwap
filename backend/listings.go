@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -19,6 +20,7 @@ type Listing struct {
 	Condition   string  `json:"condition"`
 	UserID      uint    `json:"user_id"`
 	Status      string  `json:"status" gorm:"default:available"`
+	Image       string  `json:"image"`
 }
 
 type ListingResponse struct {
@@ -34,6 +36,7 @@ type UpdateListingInput struct {
 	Category    *string  `json:"category"`
 	Condition   *string  `json:"condition"`
 	Status      *string  `json:"status"`
+	Image       *string  `json:"image"`
 }
 
 func buildListingResponses(listings []Listing) []ListingResponse {
@@ -90,7 +93,7 @@ func CreateListing(c *gin.Context) {
 	var input Listing
 
 	// Parse incoming JSON
-	if err := c.ShouldBindJSON(&input); err != nil {
+	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid JSON format.",
 			"details": err.Error(),
@@ -109,6 +112,13 @@ func CreateListing(c *gin.Context) {
 
 	// Assign listing to user
 	input.UserID = userID
+
+	//Process image input
+	file, err := c.FormFile("image")
+	if err == nil {
+		dst, _, _ := processImage(c, file, "listings")
+		input.Image = dst
+	}
 
 	// Save to DB
 	if err := DB.Create(&input).Error; err != nil {
@@ -196,13 +206,24 @@ func UpdateListing(c *gin.Context) {
 
 	// Parse incoming data
 	var input UpdateListingInput
-	if err := c.ShouldBindJSON(&input); err != nil {
+	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error":   "Invalid JSON format.",
 			"details": err.Error(),
 		})
 		return
 	}
+
+	//Process image input
+	file, err := c.FormFile("image")
+	if err == nil {
+		dst, _, _ := processImage(c, file, "listings")
+		input.Image = &dst
+	}
+
+	old_image_path := listing.Image
+	// Delete old image if it exists
+	os.Remove(old_image_path)
 
 	// Update fields
 	if input.Title != nil {
@@ -222,6 +243,9 @@ func UpdateListing(c *gin.Context) {
 	}
 	if input.Status != nil {
 		listing.Status = *input.Status
+	}
+	if input.Image != nil {
+		listing.Image = *input.Image
 	}
 
 	// Save to DB
@@ -280,7 +304,6 @@ func DeleteListing(c *gin.Context) {
 		"message": "Listing deleted successfully.",
 	})
 }
-
 
 // ----------------------------
 // BUY LISTING (PUT /api/listings/:id/buy)

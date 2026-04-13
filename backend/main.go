@@ -17,6 +17,9 @@ func main() {
 	if err := os.MkdirAll("./avatars", 0755); err != nil {
 		panic(fmt.Sprintf("Failed to create uploads directory: %v", err))
 	}
+	if err := os.MkdirAll("./listings", 0755); err != nil {
+		panic(fmt.Sprintf("Failed to create uploads directory: %v", err))
+	}
 
 	ConnectDatabase()
 	r := gin.Default()
@@ -45,7 +48,6 @@ func main() {
 	r.GET("/api/listings/:id", GetListingByID)
 	r.GET("/api/user/:id", GetUserPublic)
 	r.GET("/api/search", SearchQuery)
-	// r.POST("/api/avatar", uploadAvatar)
 
 	// PROTECTED ROUTES
 	protected := r.Group("/api")

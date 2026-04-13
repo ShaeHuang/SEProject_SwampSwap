@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"io"
+	"mime/multipart"
 	"net/http/httptest"
 	"os"
 	"testing"
-	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,13 +34,14 @@ func setupRouter() *gin.Engine {
 	protected := r.Group("/api")
 	protected.Use(JWTMiddleware())
 	{
-		protected.PUT("/user", UpdateUser)
 		protected.GET("/user", CurrentUser)
 		protected.GET("/user/listings", GetCurrentUserListings)
 		protected.POST("/listings", CreateListing)
 		protected.PUT("/listings/:id", UpdateListing)
 		protected.DELETE("/listings/:id", DeleteListing)
+		protected.PUT("/user", UpdateUser)
 		protected.PUT("/listings/:id/buy", BuyListing)
+		protected.POST("/avatar", uploadAvatar)
 	}
 	return r
 }
@@ -474,5 +477,338 @@ func TestGetCurrentUserListings(t *testing.T) {
 
 	if response.Data[0].Category != "Furniture" || response.Data[0].Condition != "Used" {
 		t.Fatalf("expected category Furniture and condition Used, got %s and %s", response.Data[0].Category, response.Data[0].Condition)
+	}
+}
+
+// -----------------------
+// TEST: REGISTER NEW USER WITH AVATAR
+// -----------------------
+func TestRegisterUserAvatar(t *testing.T) {
+	r := setupRouter()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	_ = writer.WriteField("Username", "avatartest")
+	_ = writer.WriteField("Password", "new_password")
+	file, err := os.Open("test_imgs/cat.jpeg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	part, err := writer.CreateFormFile("avatar", "cat.jpeg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(part, file); err != nil {
+		t.Fatal(err)
+	}
+	writer.Close()
+	req := httptest.NewRequest("POST", "/api/register", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	wRegister := httptest.NewRecorder()
+	r.ServeHTTP(wRegister, req)
+
+	var registerResp map[string]string
+	json.Unmarshal(wRegister.Body.Bytes(), &registerResp)
+
+	expected_response := "{\"message\":\"registration was successful\"}"
+	if wRegister.Body.String() != expected_response {
+		t.Fatalf("Expected %s, got %s.", expected_response, wRegister.Body.String())
+	}
+}
+
+// -----------------------
+// TEST: UPDATE USER WITH AVATAR
+// -----------------------
+func TestUpdateUserAvatar(t *testing.T) {
+	r := setupRouter()
+
+	// Register user
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	_ = writer.WriteField("Username", "unupdated_avatar")
+	_ = writer.WriteField("Password", "oldpass")
+	file, err := os.Open("test_imgs/cat.jpeg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	part, err := writer.CreateFormFile("avatar", "cat.jpeg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(part, file); err != nil {
+		t.Fatal(err)
+	}
+	writer.Close()
+
+	req := httptest.NewRequest("POST", "/api/register", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	// Login to get token
+	loginBody := []byte(`{"id":"unupdated_avatar","password":"oldpass"}`)
+	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
+	reqLogin.Header.Set("Content-Type", "application/json")
+	wLogin := httptest.NewRecorder()
+	r.ServeHTTP(wLogin, reqLogin)
+
+	var loginResp map[string]string
+	json.Unmarshal(wLogin.Body.Bytes(), &loginResp)
+
+	var token string
+	for _, v := range loginResp {
+		token = v
+	}
+
+	// Call PUT /api/user (protected route)
+	updateBody := &bytes.Buffer{}
+	updateWriter := multipart.NewWriter(updateBody)
+	_ = updateWriter.WriteField("Username", "updated_avatar")
+	_ = updateWriter.WriteField("Password", "new_password")
+	_ = updateWriter.WriteField("Email", "a.winney@ufl.edu")
+	_ = updateWriter.WriteField("Bio", "SwampSwap dev")
+	updateFile, err := os.Open("test_imgs/dog.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer updateFile.Close()
+	updatePart, err := updateWriter.CreateFormFile("avatar", "dog.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(updatePart, updateFile); err != nil {
+		t.Fatal(err)
+	}
+	updateWriter.Close()
+	reqUpdate := httptest.NewRequest("PUT", "/api/user", updateBody)
+	reqUpdate.Header.Set("Authorization", "Bearer "+token)
+	reqUpdate.Header.Set("Content-Type", updateWriter.FormDataContentType())
+
+	wUpdate := httptest.NewRecorder()
+	r.ServeHTTP(wUpdate, reqUpdate)
+
+	if wUpdate.Code != 200 {
+		t.Fatalf("Expected 200, got %d. Body: %s", wUpdate.Code, wUpdate.Body.String())
+	}
+
+	var updateResp map[string]interface{}
+	json.Unmarshal(wUpdate.Body.Bytes(), &updateResp)
+
+	user := updateResp["user"].(map[string]interface{})
+
+	if user["username"] != "updated_avatar" {
+		t.Fatalf("Expected username 'updated_avatar', got %v", user["username"])
+	}
+
+	if user["email"] != "a.winney@ufl.edu" {
+		t.Fatalf("Expected email 'a.winney@ufl.edu', got %v", user["email"])
+	}
+
+	if user["bio"] != "SwampSwap dev" {
+		t.Fatalf("Expected bio 'SwampSwap dev', got %v", user["bio"])
+	}
+
+	if user["avatar"] == "" {
+		t.Fatalf("Expected an avatar path, got none")
+	}
+}
+
+// -----------------------
+// TEST: CREATE AND UPDATE LISTING WITH IMAGE
+// -----------------------
+func TestListingCategoryRoundTripImage(t *testing.T) {
+	r := setupRouter()
+
+	body := []byte(`{"username":"categoryseller_image","password":"pass1234","email":"category@test.com"}`)
+	req := httptest.NewRequest("POST", "/api/register", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	loginBody := []byte(`{"id":"categoryseller_image","password":"pass1234"}`)
+	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
+	reqLogin.Header.Set("Content-Type", "application/json")
+	wLogin := httptest.NewRecorder()
+	r.ServeHTTP(wLogin, reqLogin)
+
+	var loginResp map[string]string
+	json.Unmarshal(wLogin.Body.Bytes(), &loginResp)
+	var token string
+	for _, v := range loginResp {
+		token = v
+	}
+
+	createBody := &bytes.Buffer{}
+	createWriter := multipart.NewWriter(createBody)
+	_ = createWriter.WriteField("Title", "Desk Lamp")
+	_ = createWriter.WriteField("Description", "Warm light")
+	_ = createWriter.WriteField("Price", "20")
+	_ = createWriter.WriteField("Category", "Furniture")
+	_ = createWriter.WriteField("Condition", "Used")
+	createFile, err := os.Open("test_imgs/lamp.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer createFile.Close()
+	createPart, err := createWriter.CreateFormFile("image", "lamp.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(createPart, createFile); err != nil {
+		t.Fatal(err)
+	}
+	createWriter.Close()
+	reqCreate := httptest.NewRequest("POST", "/api/listings", createBody)
+	reqCreate.Header.Set("Authorization", "Bearer "+token)
+	reqCreate.Header.Set("Content-Type", createWriter.FormDataContentType())
+	wCreate := httptest.NewRecorder()
+	r.ServeHTTP(wCreate, reqCreate)
+
+	if wCreate.Code != 201 {
+		t.Fatalf("CreateListing: expected 201, got %d. Body: %s", wCreate.Code, wCreate.Body.String())
+	}
+
+	var created Listing
+	if err := json.Unmarshal(wCreate.Body.Bytes(), &created); err != nil {
+		t.Fatalf("failed to decode created listing: %v", err)
+	}
+
+	if created.Category != "Furniture" {
+		t.Fatalf("expected created category Furniture, got %s", created.Category)
+	}
+
+	if created.Condition != "Used" {
+		t.Fatalf("expected created condition Used, got %s", created.Condition)
+	}
+
+	if created.Image == "" {
+		t.Fatalf("expected an image on the created listing, but it has none")
+	}
+
+	reqGet := httptest.NewRequest("GET", "/api/listings/1", nil)
+	wGet := httptest.NewRecorder()
+	r.ServeHTTP(wGet, reqGet)
+
+	if wGet.Code != 200 {
+		t.Fatalf("GetListingByID: expected 200, got %d. Body: %s", wGet.Code, wGet.Body.String())
+	}
+
+	var fetched Listing
+	if err := json.Unmarshal(wGet.Body.Bytes(), &fetched); err != nil {
+		t.Fatalf("failed to decode fetched listing: %v", err)
+	}
+
+	if fetched.Category != "Furniture" {
+		t.Fatalf("expected fetched category Furniture, got %s", fetched.Category)
+	}
+
+	if fetched.Condition != "Used" {
+		t.Fatalf("expected fetched condition Used, got %s", fetched.Condition)
+	}
+
+	if fetched.Image == "" {
+		t.Fatalf("expected an image on the fetched listing, but it has none")
+	}
+
+	updateBody := &bytes.Buffer{}
+	updateWriter := multipart.NewWriter(updateBody)
+	_ = updateWriter.WriteField("Title", "Desk Lamp")
+	_ = updateWriter.WriteField("Description", "Warm light")
+	_ = updateWriter.WriteField("Price", "30")
+	_ = updateWriter.WriteField("Category", "Digital Product")
+	_ = updateWriter.WriteField("Condition", "Like new")
+	updateFile, err := os.Open("test_imgs/lamp2.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer updateFile.Close()
+	updatePart, err := updateWriter.CreateFormFile("image", "lamp2.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(updatePart, updateFile); err != nil {
+		t.Fatal(err)
+	}
+	updateWriter.Close()
+	reqUpdate := httptest.NewRequest("PUT", "/api/listings/1", updateBody)
+	reqUpdate.Header.Set("Authorization", "Bearer "+token)
+	reqUpdate.Header.Set("Content-Type", updateWriter.FormDataContentType())
+	wUpdate := httptest.NewRecorder()
+	r.ServeHTTP(wUpdate, reqUpdate)
+
+	if wUpdate.Code != 200 {
+		t.Fatalf("UpdateListing: expected 200, got %d. Body: %s", wUpdate.Code, wUpdate.Body.String())
+	}
+
+	var updated Listing
+	if err := json.Unmarshal(wUpdate.Body.Bytes(), &updated); err != nil {
+		t.Fatalf("failed to decode updated listing: %v", err)
+	}
+
+	if updated.Category != "Digital Product" {
+		t.Fatalf("expected updated category Digital Product, got %s", updated.Category)
+	}
+
+	if updated.Condition != "Like new" {
+		t.Fatalf("expected updated condition Like new, got %s", updated.Condition)
+	}
+
+	if updated.Image == "" {
+		t.Fatalf("expected an image on the updated listing, but it has none")
+	}
+}
+
+// -----------------------
+// TEST: UPLOAD AVATAR
+// -----------------------
+func TestUploadAvatar(t *testing.T) {
+	r := setupRouter()
+
+	body := []byte(`{"username":"seller","password":"pass1234"}`)
+	req := httptest.NewRequest("POST", "/api/register", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	loginBody := []byte(`{"id":"seller","password":"pass1234"}`)
+	reqLogin := httptest.NewRequest("POST", "/api/login", bytes.NewBuffer(loginBody))
+	reqLogin.Header.Set("Content-Type", "application/json")
+	wLogin := httptest.NewRecorder()
+	r.ServeHTTP(wLogin, reqLogin)
+
+	var loginResp map[string]string
+	json.Unmarshal(wLogin.Body.Bytes(), &loginResp)
+	var token string
+	for _, v := range loginResp {
+		token = v
+	}
+
+	// Call PUT /api/avatar (protected route)
+	updateBody := &bytes.Buffer{}
+	updateWriter := multipart.NewWriter(updateBody)
+	updateFile, err := os.Open("test_imgs/bunny.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer updateFile.Close()
+	updatePart, err := updateWriter.CreateFormFile("avatar", "bunny.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(updatePart, updateFile); err != nil {
+		t.Fatal(err)
+	}
+	updateWriter.Close()
+	reqUpdate := httptest.NewRequest("POST", "/api/avatar", updateBody)
+	reqUpdate.Header.Set("Authorization", "Bearer "+token)
+	reqUpdate.Header.Set("Content-Type", updateWriter.FormDataContentType())
+
+	wUpdate := httptest.NewRecorder()
+	r.ServeHTTP(wUpdate, reqUpdate)
+
+	if wUpdate.Code != 200 {
+		t.Fatalf("Expected 200, got %d. Body: %s", wUpdate.Code, wUpdate.Body.String())
 	}
 }

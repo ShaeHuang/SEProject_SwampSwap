@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -142,7 +143,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	var input UpdateUserInput
-	if err := c.ShouldBindJSON(&input); err != nil {
+	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid JSON"})
 		return
 	}
@@ -161,6 +162,17 @@ func UpdateUser(c *gin.Context) {
 	if input.Email != "" {
 		u.Email = html.EscapeString(strings.TrimSpace(input.Email))
 	}
+
+	//Process avatar input
+	file, err := c.FormFile("avatar")
+	if err == nil {
+		dst, _, _ := processImage(c, file, "avatars")
+		input.Avatar = dst
+	}
+
+	old_avatar_path := u.Avatar
+	// Delete old avatar if it exists
+	os.Remove(old_avatar_path)
 
 	// Update avatar if provided
 	if input.Avatar != "" {
