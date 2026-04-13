@@ -91,9 +91,27 @@
 ---
 
 ## Kabeer Latane (Backend)
-- [Fill in what Kabeer did in Sprint 3]
-- Backend unit tests added/updated:
-  - (List test files + how to run)
+### Bug Fixes
+- Fixed `search.go`: rewrote `SearchQuery` handler to use `c.Query()` instead of `ShouldBindJSON`, since GET requests don't carry JSON bodies — every search call was failing with a 400
+- Fixed `search.go`: empty search results now return 200 with `[]` instead of 400 with an error message
+- Fixed `main.go`: moved `uploadAvatar` from public routes to the protected route group — it requires authentication internally but the JWT middleware was never running on it
+
+### New Feature: Messaging API
+- Created `Message` model (`message.go`) with sender ID, receiver ID, content, and is_read flag
+- Implemented `GET /api/messages` — returns conversation list for the authenticated user with last message, timestamp, and unread count per conversation partner
+- Implemented `GET /api/messages/:userId` — returns full message thread between authenticated user and target user, sorted chronologically; marks incoming messages as read
+- Implemented `POST /api/messages` — sends a message to another user with validation (receiver must exist, cannot message yourself)
+- Designed all response shapes to match existing frontend TypeScript interfaces (`Message`, `ConversationItem`) for drop-in integration
+- Added `Message` to database migration in `main.go`
+
+### Unit Tests
+- `search_test.go`: `TestSearchByKeyword`, `TestSearchByPriceRange`, `TestSearchNoMatches`, `TestSearchNoFilters`
+- `message_test.go`: `TestSendAndGetMessages` (full send/reply/thread/conversation flow), `TestCannotMessageSelf`
+- Updated `setupRouter()` in `user_test.go` to register `/api/search`, `/api/listings/:id/buy`, and all three messaging routes
+
+### PRs
+- PR #__ (`fix/search-and-cleanup`) — bug fixes + search tests
+- PR #__ (`feat/messaging-backend`) — messaging API + tests
 
 ---
 
