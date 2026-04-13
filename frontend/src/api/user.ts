@@ -7,6 +7,41 @@ import type {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
 
+const getApiOrigin = () => {
+  try {
+    return new URL(BASE_URL).origin;
+  } catch {
+    return "http://localhost:8080";
+  }
+};
+
+const normalizeAvatarUrl = (avatar: string) => {
+  if (!avatar) {
+    return avatar;
+  }
+
+  if (/^https?:\/\//i.test(avatar)) {
+    return avatar;
+  }
+
+  const apiOrigin = getApiOrigin();
+  const fileName = avatar.split("/").pop();
+
+  if (avatar.startsWith("/files/")) {
+    return `${apiOrigin}${avatar}`;
+  }
+
+  if (avatar.startsWith("/avatars/") && fileName) {
+    return `${apiOrigin}/files/${fileName}`;
+  }
+
+  if ((avatar.startsWith("./avatars/") || avatar.startsWith("avatars/")) && fileName) {
+    return `${apiOrigin}/files/${fileName}`;
+  }
+
+  return avatar;
+};
+
 const getToken = () => localStorage.getItem("token");
 
 const getAuthHeaders = (): Record<string, string> => {
@@ -57,7 +92,7 @@ export const getCurrentUserProfile = async (): Promise<CurrentUserProfile> => {
     id: json.data.ID,
     username: json.data.username,
     email: json.data.email,
-    avatar: json.data.avatar,
+    avatar: normalizeAvatarUrl(json.data.avatar),
     bio: json.data.bio,
     joinedAt: json.data.CreatedAt,
   };
@@ -101,8 +136,37 @@ export const updateCurrentUserProfile = async (
     id: json.user.ID,
     username: json.user.username,
     email: json.user.email,
-    avatar: json.user.avatar,
+    avatar: normalizeAvatarUrl(json.user.avatar),
     bio: json.user.bio,
     joinedAt: json.user.CreatedAt,
   };
+};
+
+export const uploadCurrentUserAvatar = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  const response = await fetch(`${BASE_URL}/avatar`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+    },
+    body: formData,
+  });
+
+  const json = await response.json();
+
+  if (!response.ok) {
+    throw new Error(json.message ?? json.error ?? "Failed to upload avatar");
+  }
+
+  if (typeof json.url === "string" && json.url.length > 0) {
+    return normalizeAvatarUrl(json.url);
+  }
+
+  if (typeof json.filename === "string" && json.filename.length > 0) {
+    return `${getApiOrigin()}/files/${json.filename}`;
+  }
+
+  throw new Error("Avatar upload succeeded but no URL was returned");
 };
