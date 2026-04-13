@@ -26,6 +26,7 @@ func setupRouter() *gin.Engine {
 		public.POST("/login", Login)
 		public.GET("/listings", GetListings)
 		public.GET("/listings/:id", GetListingByID)
+		public.GET("/search", SearchQuery)
 	}
 
 	protected := r.Group("/api")
@@ -37,6 +38,7 @@ func setupRouter() *gin.Engine {
 		protected.POST("/listings", CreateListing)
 		protected.PUT("/listings/:id", UpdateListing)
 		protected.DELETE("/listings/:id", DeleteListing)
+		protected.PUT("/listings/:id/buy", BuyListing)
 	}
 	return r
 }
