@@ -60,15 +60,9 @@
 
 # 2) Frontend Tests Summary (Team)
 
-## Cypress (E2E)
-- Xiangyu Zhou:
-  - `frontend/cypress/e2e/user_info.cy.ts`
-- Xueni Huang:
-  - [List file(s) if any]
-
 ## Unit Tests
 - Xiangyu Zhou:
-  - [List unit test file(s)]
+  - `frontend/cypress/e2e/user_info.cy.ts`
 - Xueni Huang:
   - [List unit test file(s)]
 
