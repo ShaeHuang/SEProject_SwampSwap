@@ -45,7 +45,7 @@ func main() {
 	r.GET("/api/listings/:id", GetListingByID)
 	r.GET("/api/user/:id", GetUserPublic)
 	r.GET("/api/search", SearchQuery)
-	r.POST("/api/avatar", uploadAvatar)
+	// r.POST("/api/avatar", uploadAvatar)
 
 	// PROTECTED ROUTES
 	protected := r.Group("/api")
@@ -58,6 +58,7 @@ func main() {
 		protected.DELETE("/listings/:id", DeleteListing)
 		protected.PUT("/user", UpdateUser)
 		protected.PUT("/listings/:id/buy", BuyListing)
+		protected.POST("/avatar", uploadAvatar)
 	}
 
 	err := r.Run(":8080")
