@@ -84,6 +84,7 @@
 ---
 
 ## Aidan Winney (Backend)
+
 ### Image Support for Profile Avatars and Listings
 - Created a new ``image.go`` file that enables the backend to store images for the frontend to use.
     - These images are not stored inside the database, but instead in directories in the backend folder.
