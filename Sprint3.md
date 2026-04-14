@@ -109,6 +109,7 @@
 - `message_test.go`: `TestSendAndGetMessages` (full send/reply/thread/conversation flow), `TestCannotMessageSelf`
 - Updated `setupRouter()` in `user_test.go` to register `/api/search`, `/api/listings/:id/buy`, and all three messaging routes
 
+
 ### PRs
 - PR #__ (`fix/search-and-cleanup`) — bug fixes + search tests
 - PR #__ (`feat/messaging-backend`) — messaging API + tests
