@@ -17,8 +17,8 @@ func setupRouter() *gin.Engine {
 	os.Setenv("API_SECRET", "testsecret")
 
 	ConnectDatabase()
-	DB.Migrator().DropTable(&User{}, &Listing{})
-	DB.AutoMigrate(&User{}, &Listing{})
+	DB.Migrator().DropTable(&User{}, &Listing{}, &Message{})
+	DB.AutoMigrate(&User{}, &Listing{}, &Message{})
 	r := gin.Default()
 
 	public := r.Group("/api")
@@ -42,6 +42,9 @@ func setupRouter() *gin.Engine {
 		protected.PUT("/user", UpdateUser)
 		protected.PUT("/listings/:id/buy", BuyListing)
 		protected.POST("/avatar", uploadAvatar)
+		protected.GET("/messages", GetConversations)
+		protected.GET("/messages/:userId", GetMessagesWithUser)
+		protected.POST("/messages", SendMessage)
 	}
 	return r
 }

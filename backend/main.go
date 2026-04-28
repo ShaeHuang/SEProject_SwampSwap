@@ -62,6 +62,9 @@ func main() {
 		protected.PUT("/user", UpdateUser)
 		protected.PUT("/listings/:id/buy", BuyListing)
 		protected.POST("/avatar", uploadAvatar)
+		protected.GET("/messages", GetConversations)
+		protected.GET("/messages/:userId", GetMessagesWithUser)
+		protected.POST("/messages", SendMessage)
 	}
 
 	err := r.Run(":8080")
@@ -79,5 +82,5 @@ func ConnectDatabase() {
 	}
 
 	DB = database
-	DB.AutoMigrate(&User{}, &Listing{})
+	DB.AutoMigrate(&User{}, &Listing{}, &Message{})
 }

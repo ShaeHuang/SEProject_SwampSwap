@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Heart, Search } from "lucide-react";
 
 import { getCurrentUser, logout, type CurrentUser } from "@/api/auth";
 import {
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useFavoriteListings } from "@/hooks/useFavoriteListings";
 import { cn } from "@/lib/utils";
 import { getListingImageSrc } from "@/lib/listing-images";
 import { toast } from "sonner";
@@ -91,6 +92,7 @@ function ListingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSellOpen, setIsSellOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sellForm, setSellForm] = useState({
     title: "",
@@ -99,6 +101,7 @@ function ListingsPage() {
     category: "",
     condition: "",
   });
+  const { isFavorite, toggleFavorite } = useFavoriteListings();
 
   const search = searchParams.get("search") ?? "";
   const sort = (searchParams.get("sort") as ListingSort | null) ?? defaultListingSort;
@@ -218,6 +221,7 @@ function ListingsPage() {
   const handleLogout = () => {
     logout();
     setCurrentUser(null);
+    setIsUserMenuOpen(false);
     toast.success("Logged out successfully");
     navigate("/login");
   };
@@ -407,10 +411,13 @@ function ListingsPage() {
 
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
               {currentUser ? (
-                <div className="flex items-center gap-2">
+                <div className="relative">
                   <button
                     type="button"
-                    onClick={() => navigate("/user-info")}
+                    aria-haspopup="menu"
+                    aria-expanded={isUserMenuOpen}
+                    aria-label="Open user menu"
+                    onClick={() => setIsUserMenuOpen((isOpen) => !isOpen)}
                     className="flex items-center gap-3 rounded-2xl bg-background px-3 py-2 text-left transition hover:bg-accent"
                   >
                     {renderAvatar(
@@ -425,9 +432,43 @@ function ListingsPage() {
                       </p>
                     </div>
                   </button>
-                  <Button variant="outline" onClick={handleLogout}>
-                    Log Out
-                  </Button>
+                  {isUserMenuOpen && (
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-52 rounded-lg border bg-card p-2 shadow-lg"
+                    >
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-accent"
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          navigate("/favorites");
+                        }}
+                      >
+                        Saved Listings
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-accent"
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          navigate("/user-info");
+                        }}
+                      >
+                        View Profile
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="w-full rounded-md px-3 py-2 text-left text-sm text-destructive transition hover:bg-destructive/10"
+                        onClick={handleLogout}
+                      >
+                        Log Out
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Button variant="outline" onClick={() => navigate("/login")}>
@@ -643,6 +684,7 @@ function ListingsPage() {
                   const sellerName = listing.seller_name || `User #${listing.user_id}`;
                   const sellerInitial = sellerName.trim().charAt(0).toUpperCase() || "U";
                   const isOwnListing = currentUser?.id === listing.user_id;
+                  const isSaved = isFavorite(listing.ID);
 
                   return (
                     <Card
@@ -667,15 +709,37 @@ function ListingsPage() {
                               </p>
                             </div>
                           </div>
-                          <span
-                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                              isSold
-                                ? "bg-muted text-muted-foreground"
-                                : "bg-secondary/15 text-secondary"
-                            }`}
-                          >
-                            {isSold ? "Sold" : "Available"}
-                          </span>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <Button
+                              type="button"
+                              variant={isSaved ? "secondary" : "outline"}
+                              size="icon-sm"
+                              aria-label={
+                                isSaved
+                                  ? `Remove ${listing.title} from saved listings`
+                                  : `Save ${listing.title}`
+                              }
+                              title={
+                                isSaved
+                                  ? "Remove from saved listings"
+                                  : "Save listing"
+                              }
+                              onClick={() => toggleFavorite(listing.ID)}
+                            >
+                              <Heart
+                                className={cn("size-4", isSaved && "fill-current")}
+                              />
+                            </Button>
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                isSold
+                                  ? "bg-muted text-muted-foreground"
+                                  : "bg-secondary/15 text-secondary"
+                              }`}
+                            >
+                              {isSold ? "Sold" : "Available"}
+                            </span>
+                          </div>
                         </div>
                         <div className="text-3xl font-semibold text-primary">
                           {formatPrice(listing.price)}

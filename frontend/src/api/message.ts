@@ -1,78 +1,64 @@
 import type { ConversationItem, Message } from "@/types/message";
-import { getUserInfo } from "@/api/user";
 
-const mockMessages: Message[] = [
-  { id: "1", senderId: "1", receiverId: "2", content: "Hey, I saw your listing, still available?", createdAt: "2026-03-01T10:15:00Z", isRead: true },
-  { id: "2", senderId: "2", receiverId: "1", content: "Yes, still available. When can you pick up?", createdAt: "2026-03-01T10:18:00Z", isRead: true },
-  { id: "3", senderId: "1", receiverId: "2", content: "Tonight works for me.", createdAt: "2026-03-01T10:20:00Z", isRead: false },
-  { id: "4", senderId: "1", receiverId: "3", content: "Can you share more pictures?", createdAt: "2026-03-02T08:30:00Z", isRead: false },
-];
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
 
-const USER_ID = "1";
+const getToken = () => localStorage.getItem("token");
+
+const getAuthHeaders = (): Record<string, string> => {
+  const token = getToken();
+  if (!token) return {};
+  return { Authorization: `Bearer ${token}` };
+};
 
 export const getConversations = async (): Promise<ConversationItem[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  const response = await fetch(`${BASE_URL}/messages`, {
+    headers: { ...getAuthHeaders() },
+  });
 
-  const myConversations: Record<string, Message[]> = {};
-
-  for (const msg of mockMessages) {
-    if (msg.senderId === USER_ID || msg.receiverId === USER_ID) {
-      const otherId = msg.senderId === USER_ID ? msg.receiverId : msg.senderId;
-      if (!myConversations[otherId]) myConversations[otherId] = [];
-      myConversations[otherId].push(msg);
-    }
+  if (!response.ok) {
+    if (response.status === 401) return [];
+    throw new Error("Failed to load conversations");
   }
 
-  const convos: ConversationItem[] = [];
+  return response.json();
+};
 
-  for (const otherId of Object.keys(myConversations)) {
-    const messages = myConversations[otherId].sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-    const last = messages[messages.length - 1];
-    const unreadCount = messages.filter((m) => !m.isRead && m.receiverId === USER_ID).length;
+export const getConversationWithUser = async (
+  otherUserId: string
+): Promise<Message[]> => {
+  const response = await fetch(`${BASE_URL}/messages/${otherUserId}`, {
+    headers: { ...getAuthHeaders() },
+  });
 
-    const otherProfile = await getUserInfo(otherId).catch(() => null);
-
-    convos.push({
-      userId: otherId,
-      username: otherProfile?.username || `User ${otherId}`,
-      avatar: otherProfile?.avatar,
-      lastMessage: last.content,
-      lastAt: last.createdAt,
-      unreadCount,
-    });
+  if (!response.ok) {
+    if (response.status === 401) return [];
+    throw new Error("Failed to load messages");
   }
 
-  return convos.sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
+  return response.json();
 };
 
-export const getConversationWithUser = async (otherUserId: string): Promise<Message[]> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
+export const sendMessage = async (
+  receiverId: string,
+  content: string
+): Promise<Message> => {
+  const response = await fetch(`${BASE_URL}/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({
+      receiver_id: Number(receiverId),
+      content,
+    }),
+  });
 
-  const thread = mockMessages
-    .filter(
-      (msg) =>
-        (msg.senderId === USER_ID && msg.receiverId === otherUserId) ||
-        (msg.senderId === otherUserId && msg.receiverId === USER_ID)
-    )
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const json = await response.json();
 
-  return thread;
-};
+  if (!response.ok) {
+    throw new Error(json.error ?? "Failed to send message");
+  }
 
-export const sendMessage = async (receiverId: string, content: string): Promise<Message> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  const newMessage: Message = {
-    id: String(mockMessages.length + 1),
-    senderId: USER_ID,
-    receiverId,
-    content,
-    createdAt: new Date().toISOString(),
-    isRead: false,
-  };
-  mockMessages.push(newMessage);
-
-  return newMessage;
+  return json;
 };
