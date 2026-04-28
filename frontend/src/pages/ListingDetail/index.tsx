@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Heart } from "lucide-react";
 
 import { getCurrentUser, type CurrentUser } from "@/api/auth";
 import { getListingById, isAuthenticated } from "@/api/listings";
@@ -12,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useFavoriteListings } from "@/hooks/useFavoriteListings";
 import { toast } from "sonner";
 import type { Listing } from "@/types/listing";
 
@@ -22,6 +24,7 @@ function ListingDetailPage() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isFavorite, toggleFavorite } = useFavoriteListings();
 
   useEffect(() => {
     if (!id) {
@@ -104,6 +107,7 @@ function ListingDetailPage() {
   const sellerName = listing.seller_name || `User #${listing.user_id}`;
   const sellerInitial = sellerName.trim().charAt(0).toUpperCase() || "U";
   const isOwnListing = currentUser?.id === listing.user_id;
+  const isSaved = isFavorite(listing.ID);
 
   const handleBuy = async () => {
     if (!isAuthenticated()) {
@@ -140,9 +144,23 @@ function ListingDetailPage() {
           <Button variant="ghost" onClick={() => navigate("/listings")}>
             Back to marketplace
           </Button>
-          <Button variant="outline" onClick={() => navigate("/")}>
-            Home
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant={isSaved ? "secondary" : "outline"}
+              onClick={() => toggleFavorite(listing.ID)}
+              aria-label={
+                isSaved
+                  ? `Remove ${listing.title} from saved listings`
+                  : `Save ${listing.title}`
+              }
+            >
+              <Heart className={`size-4 ${isSaved ? "fill-current" : ""}`} />
+              {isSaved ? "Saved" : "Save"}
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/")}>
+              Home
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">

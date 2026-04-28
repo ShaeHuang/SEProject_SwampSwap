@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Check, Pencil } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, Pencil, Upload } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -14,6 +14,7 @@ import {
 import {
   getCurrentUserListings,
   getCurrentUserProfile,
+  uploadCurrentUserAvatar,
   updateCurrentUserProfile,
 } from "@/api/user";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,8 @@ function UserPage() {
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [draftAvatar, setDraftAvatar] = useState(defaultProfileIcon);
   const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const avatarFileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -277,6 +280,34 @@ function UserPage() {
     }
   };
 
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file || !profile) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      return;
+    }
+
+    try {
+      setIsAvatarUploading(true);
+      const uploadedAvatarUrl = await uploadCurrentUserAvatar(file);
+      const updatedProfile = await updateCurrentUserProfile({ avatar: uploadedAvatarUrl });
+      setProfile(updatedProfile);
+      setDraftAvatar(updatedProfile.avatar || uploadedAvatarUrl);
+      setIsProfileDialogOpen(false);
+      toast.success("Profile photo uploaded.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to upload profile photo.");
+    } finally {
+      setIsAvatarUploading(false);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     toast.success("Logged out successfully.");
@@ -326,6 +357,9 @@ function UserPage() {
             </Button>
             <Button variant="outline" onClick={() => navigate("/listings")}>
               Go to Marketplace
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/favorites")}>
+              Saved Listings
             </Button>
             <Button variant="destructive" onClick={handleLogout}>
               Log Out
@@ -721,9 +755,27 @@ function UserPage() {
             <DialogHeader>
               <DialogTitle>Choose a profile icon</DialogTitle>
               <DialogDescription>
-                Select one icon first, then click confirm to update your profile photo.
+                Select a preset icon, or upload a photo from your device.
               </DialogDescription>
             </DialogHeader>
+
+            <input
+              ref={avatarFileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isAvatarUploading}
+              onClick={() => avatarFileInputRef.current?.click()}
+            >
+              <Upload className="size-4" />
+              {isAvatarUploading ? "Uploading..." : "Upload from Device"}
+            </Button>
 
             <div className="grid grid-cols-3 gap-3">
               {profileIconOptions.map((option) => {

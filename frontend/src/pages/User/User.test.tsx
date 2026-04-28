@@ -20,6 +20,7 @@ vi.mock("@/api/user", () => ({
   getCurrentUserProfile: vi.fn(),
   getCurrentUserListings: vi.fn(),
   updateCurrentUserProfile: vi.fn(),
+  uploadCurrentUserAvatar: vi.fn(),
 }));
 
 vi.mock("@/api/auth", () => ({

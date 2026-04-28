@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import ListingsPage from "./index";
+import { FAVORITE_LISTINGS_STORAGE_KEY } from "@/lib/favorite-listings";
 import type { Listing } from "@/types/listing";
 
 const mockNavigate = vi.fn();
@@ -78,6 +79,7 @@ const renderListings = (initialEntries = ["/"]) =>
 describe("ListingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     vi.mocked(listListings).mockResolvedValue([fakeListing]);
     vi.mocked(createListing).mockResolvedValue(fakeListing);
     vi.mocked(isAuthenticated).mockReturnValue(false);
@@ -108,6 +110,7 @@ describe("ListingsPage", () => {
     expect(screen.getByText("SwampSwap Market")).toBeInTheDocument();
     expect(screen.getByText("Campus second-hand listings")).toBeInTheDocument();
     expect(screen.getByText("Home")).toBeInTheDocument();
+    expect(screen.queryByText("Saved")).not.toBeInTheDocument();
 
     await waitForListings();
   });
@@ -197,17 +200,46 @@ describe("ListingsPage", () => {
     expect(screen.getByRole("button", { name: /log in/i })).toBeInTheDocument();
   });
 
-  it("shows user info when authenticated", async () => {
+  it("shows user menu actions when authenticated", async () => {
     vi.mocked(isAuthenticated).mockReturnValue(true);
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 1, username: "albert" });
 
+    const user = userEvent.setup();
     renderListings();
 
     await waitFor(() => {
       expect(screen.getByText("albert")).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("button", { name: /log out/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /log out/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /open user menu/i }));
+
+    expect(screen.getByRole("menuitem", { name: /saved listings/i })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /view profile/i })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /log out/i })).toBeInTheDocument();
+  });
+
+  it("navigates from the user menu", async () => {
+    vi.mocked(isAuthenticated).mockReturnValue(true);
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 1, username: "albert" });
+
+    const user = userEvent.setup();
+    renderListings();
+
+    await waitFor(() => {
+      expect(screen.getByText("albert")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: /open user menu/i }));
+    await user.click(screen.getByRole("menuitem", { name: /view profile/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith("/user-info");
+
+    await user.click(screen.getByRole("button", { name: /open user menu/i }));
+    await user.click(screen.getByRole("menuitem", { name: /saved listings/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith("/favorites");
   });
 
   it("logs out authenticated user", async () => {
@@ -221,7 +253,8 @@ describe("ListingsPage", () => {
       expect(screen.getByText("albert")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: /log out/i }));
+    await user.click(screen.getByRole("button", { name: /open user menu/i }));
+    await user.click(screen.getByRole("menuitem", { name: /log out/i }));
 
     expect(logout).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith("Logged out successfully");
@@ -256,6 +289,33 @@ describe("ListingsPage", () => {
     await waitForListings();
 
     expect(screen.getByRole("button", { name: /^buy$/i })).toBeInTheDocument();
+  });
+
+  it("saves and unsaves a listing from a marketplace card", async () => {
+    const user = userEvent.setup();
+    renderListings();
+
+    await waitForListings();
+
+    await user.click(screen.getByRole("button", { name: "Save Calculus Textbook" }));
+
+    expect(localStorage.getItem(FAVORITE_LISTINGS_STORAGE_KEY)).toBe("[1]");
+    expect(
+      screen.getByRole("button", {
+        name: "Remove Calculus Textbook from saved listings",
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Remove Calculus Textbook from saved listings",
+      }),
+    );
+
+    expect(localStorage.getItem(FAVORITE_LISTINGS_STORAGE_KEY)).toBe("[]");
+    expect(
+      screen.getByRole("button", { name: "Save Calculus Textbook" }),
+    ).toBeInTheDocument();
   });
 
   it("redirects to login when unauthenticated user clicks Buy", async () => {
