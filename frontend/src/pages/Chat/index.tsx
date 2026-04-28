@@ -101,6 +101,10 @@ function ChatPage() {
           <h2 className="mb-4 text-lg font-semibold">Conversations</h2>
           {loading && !messages.length ? (
             <div className="py-8 text-center text-muted-foreground">Loading...</div>
+          ) : sortedConversations.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No conversations yet. Message a seller to start one.
+            </p>
           ) : (
             <ul className="space-y-2">
               {sortedConversations.map((item) => (
