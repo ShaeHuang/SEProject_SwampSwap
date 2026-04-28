@@ -38,6 +38,8 @@ export interface Listing {
   condition: ListingCondition;
   user_id: number;
   status: ListingStatus;
+  image?: string | string[] | null;
+  imageUrls?: string[];
   seller_name?: string;
   seller_avatar?: string;
 }

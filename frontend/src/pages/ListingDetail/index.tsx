@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getListingImageSrc, getListingPrimaryImage } from "@/lib/listing-images";
 import { useFavoriteListings } from "@/hooks/useFavoriteListings";
 import { toast } from "sonner";
 import type { Listing } from "@/types/listing";
@@ -107,6 +108,7 @@ function ListingDetailPage() {
   const sellerName = listing.seller_name || `User #${listing.user_id}`;
   const sellerInitial = sellerName.trim().charAt(0).toUpperCase() || "U";
   const isOwnListing = currentUser?.id === listing.user_id;
+  const primaryImage = getListingPrimaryImage(listing);
   const isSaved = isFavorite(listing.ID);
 
   const handleBuy = async () => {
@@ -187,6 +189,32 @@ function ListingDetailPage() {
               <div className="text-4xl font-semibold text-primary">{formattedPrice}</div>
             </CardHeader>
             <CardContent className="space-y-6">
+              <section className="space-y-3">
+                <div className="overflow-hidden rounded-2xl border border-primary/10 bg-muted/50">
+                  <img
+                    src={getListingImageSrc(listing)}
+                    alt={listing.title}
+                    className="h-80 w-full object-cover"
+                  />
+                </div>
+                {listing.imageUrls && listing.imageUrls.length > 1 && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {listing.imageUrls.slice(0, 4).map((imageUrl, index) => (
+                      <img
+                        key={imageUrl}
+                        src={imageUrl}
+                        alt={`${listing.title} ${index + 1}`}
+                        className={`h-20 w-full rounded-lg border object-cover ${
+                          imageUrl === primaryImage
+                            ? "border-primary"
+                            : "border-primary/10"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
               <section className="space-y-2">
                 <h2 className="text-lg font-semibold">About this item</h2>
                 <p className="leading-7 text-muted-foreground">{listing.description}</p>

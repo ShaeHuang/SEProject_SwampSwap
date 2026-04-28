@@ -662,6 +662,18 @@ func TestListingCategoryRoundTripImage(t *testing.T) {
 	if _, err := io.Copy(createPart, createFile); err != nil {
 		t.Fatal(err)
 	}
+	createFile, err = os.Open("test_imgs/lamp2.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer createFile.Close()
+	createPart, err = createWriter.CreateFormFile("image", "lamp2.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(createPart, createFile); err != nil {
+		t.Fatal(err)
+	}
 	createWriter.Close()
 	reqCreate := httptest.NewRequest("POST", "/api/listings", createBody)
 	reqCreate.Header.Set("Authorization", "Bearer "+token)
@@ -686,8 +698,10 @@ func TestListingCategoryRoundTripImage(t *testing.T) {
 		t.Fatalf("expected created condition Used, got %s", created.Condition)
 	}
 
-	if created.Image == "" {
-		t.Fatalf("expected an image on the created listing, but it has none")
+	var images []string
+	_ = json.Unmarshal(created.Image, &images)
+	if len(images) != 2 {
+		t.Fatalf("expected 2 images on the created listing, got %d", len(images))
 	}
 
 	reqGet := httptest.NewRequest("GET", "/api/listings/1", nil)
@@ -711,8 +725,9 @@ func TestListingCategoryRoundTripImage(t *testing.T) {
 		t.Fatalf("expected fetched condition Used, got %s", fetched.Condition)
 	}
 
-	if fetched.Image == "" {
-		t.Fatalf("expected an image on the fetched listing, but it has none")
+	_ = json.Unmarshal(fetched.Image, &images)
+	if len(images) == 0 {
+		t.Fatalf("expected 2 images on the fetched listing, got %d", len(images))
 	}
 
 	updateBody := &bytes.Buffer{}
@@ -758,8 +773,9 @@ func TestListingCategoryRoundTripImage(t *testing.T) {
 		t.Fatalf("expected updated condition Like new, got %s", updated.Condition)
 	}
 
-	if updated.Image == "" {
-		t.Fatalf("expected an image on the updated listing, but it has none")
+	_ = json.Unmarshal(updated.Image, &images)
+	if len(images) != 1 {
+		t.Fatalf("expected 1 image on the updated listing, got %d", len(images))
 	}
 }
 

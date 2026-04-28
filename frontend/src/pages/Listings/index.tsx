@@ -39,6 +39,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useFavoriteListings } from "@/hooks/useFavoriteListings";
 import { cn } from "@/lib/utils";
+import { getListingImageSrc } from "@/lib/listing-images";
 import { toast } from "sonner";
 import { listingCategories, listingConditions } from "@/types/listing";
 import type {
@@ -82,46 +83,6 @@ const renderAvatar = (
       {fallbackText}
     </div>
   );
-
-const getListingImage = (title: string, price: number) => {
-  const palette = [
-    ["#0f4c81", "#4f83ff"],
-    ["#c65d00", "#ffb347"],
-    ["#12664f", "#52b788"],
-    ["#5a189a", "#9d4edd"],
-  ];
-  const seed = title
-    .split("")
-    .reduce((total, character) => total + character.charCodeAt(0), 0);
-  const [startColor, endColor] = palette[seed % palette.length];
-  const initials = title
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? "")
-    .join("") || "SS";
-  const safeTitle = title.slice(0, 28);
-
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
-      <defs>
-        <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stop-color="${startColor}" />
-          <stop offset="100%" stop-color="${endColor}" />
-        </linearGradient>
-      </defs>
-      <rect width="640" height="400" rx="36" fill="url(#g)" />
-      <circle cx="540" cy="86" r="86" fill="rgba(255,255,255,0.14)" />
-      <circle cx="126" cy="338" r="112" fill="rgba(255,255,255,0.1)" />
-      <text x="68" y="168" fill="white" font-family="Arial, sans-serif" font-size="88" font-weight="700">${initials}</text>
-      <text x="68" y="248" fill="rgba(255,255,255,0.92)" font-family="Arial, sans-serif" font-size="34" font-weight="600">${safeTitle}</text>
-      <text x="68" y="302" fill="rgba(255,255,255,0.78)" font-family="Arial, sans-serif" font-size="24">SwampSwap Listing</text>
-      <text x="68" y="352" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="700">$${price}</text>
-    </svg>
-  `;
-
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-};
 
 function ListingsPage() {
   const navigate = useNavigate();
@@ -787,7 +748,7 @@ function ListingsPage() {
                       <CardContent className="space-y-3 pt-0">
                         <div className="overflow-hidden rounded-[1.5rem] border border-primary/10 bg-muted/50">
                           <img
-                            src={getListingImage(listing.title, listing.price)}
+                            src={getListingImageSrc(listing)}
                             alt={listing.title}
                             className="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                           />
