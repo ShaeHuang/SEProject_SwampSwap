@@ -162,3 +162,16 @@ func processImage(c *gin.Context, file *multipart.FileHeader, folder string) (st
 
 	return dst, uniqueName, file
 }
+
+func processMultipleImages(c *gin.Context, files []*multipart.FileHeader, folder string) ([]string, []string, []*multipart.FileHeader) {
+	var uniqueNames []string
+	var dsts []string
+
+	for _, file := range files {
+		dst, uniqueName, _ := processImage(c, file, folder)
+		uniqueNames = append(uniqueNames, uniqueName)
+		dsts = append(dsts, dst)
+	}
+
+	return dsts, uniqueNames, files
+}

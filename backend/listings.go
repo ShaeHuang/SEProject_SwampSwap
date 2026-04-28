@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"os"
 
@@ -20,7 +21,7 @@ type Listing struct {
 	Condition   string  `json:"condition"`
 	UserID      uint    `json:"user_id"`
 	Status      string  `json:"status" gorm:"default:available"`
-	Image       string  `json:"image"`
+	Image       []byte  `json:"image"`
 }
 
 type ListingResponse struct {
@@ -36,7 +37,7 @@ type UpdateListingInput struct {
 	Category    *string  `json:"category"`
 	Condition   *string  `json:"condition"`
 	Status      *string  `json:"status"`
-	Image       *string  `json:"image"`
+	Image       *[]byte  `json:"image"`
 }
 
 func buildListingResponses(listings []Listing) []ListingResponse {
@@ -113,11 +114,13 @@ func CreateListing(c *gin.Context) {
 	// Assign listing to user
 	input.UserID = userID
 
-	//Process image input
-	file, err := c.FormFile("image")
-	if err == nil {
-		dst, _, _ := processImage(c, file, "listings")
-		input.Image = dst
+	//Process images input
+	form, err := c.MultipartForm()
+	if err == nil && form != nil {
+		if files, ok := form.File["image"]; ok && len(files) > 0 {
+			dsts, _, _ := processMultipleImages(c, files, "listings")
+			input.Image, _ = json.Marshal(dsts)
+		}
 	}
 
 	// Save to DB
@@ -214,16 +217,22 @@ func UpdateListing(c *gin.Context) {
 		return
 	}
 
-	//Process image input
-	file, err := c.FormFile("image")
-	if err == nil {
-		dst, _, _ := processImage(c, file, "listings")
-		input.Image = &dst
+	//Process images input
+	form, err := c.MultipartForm()
+	if err == nil && form != nil {
+		if files, ok := form.File["image"]; ok && len(files) > 0 {
+			dsts, _, _ := processMultipleImages(c, files, "listings")
+			imgBytes, _ := json.Marshal(dsts)
+			input.Image = &imgBytes
+		}
 	}
 
-	old_image_path := listing.Image
-	// Delete old image if it exists
-	os.Remove(old_image_path)
+	var old_image_paths []string
+	_ = json.Unmarshal(listing.Image, &old_image_paths)
+	// Delete old images if they exist
+	for _, old_image_path := range old_image_paths {
+		os.Remove(old_image_path)
+	}
 
 	// Update fields
 	if input.Title != nil {
@@ -246,6 +255,8 @@ func UpdateListing(c *gin.Context) {
 	}
 	if input.Image != nil {
 		listing.Image = *input.Image
+	} else {
+		listing.Image = nil
 	}
 
 	// Save to DB
