@@ -6,6 +6,7 @@ import UserPage from "@/pages/User";
 import ChatPage from "@/pages/Chat";
 import ListingsPage from "@/pages/Listings";
 import ListingDetailPage from "@/pages/ListingDetail";
+import FavoritesPage from "@/pages/Favorites";
 
 export const router = createBrowserRouter([
   {
@@ -27,6 +28,10 @@ export const router = createBrowserRouter([
   {
     path: "/listings/:id",
     Component: ListingDetailPage,
+  },
+  {
+    path: "/favorites",
+    Component: FavoritesPage,
   },
   {
     path: "/user-info",

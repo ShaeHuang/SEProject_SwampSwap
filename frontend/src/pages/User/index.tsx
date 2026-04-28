@@ -358,6 +358,9 @@ function UserPage() {
             <Button variant="outline" onClick={() => navigate("/listings")}>
               Go to Marketplace
             </Button>
+            <Button variant="outline" onClick={() => navigate("/favorites")}>
+              Saved Listings
+            </Button>
             <Button variant="destructive" onClick={handleLogout}>
               Log Out
             </Button>
