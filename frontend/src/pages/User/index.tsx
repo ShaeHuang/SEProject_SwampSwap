@@ -39,6 +39,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { getListingImageSrc } from "@/lib/listing-images";
 import { defaultProfileIcon, profileIconOptions } from "@/lib/profile-icons";
 import { listingCategories, listingConditions } from "@/types/listing";
 import type { CreateListingData, Listing } from "@/types/listing";
@@ -474,6 +475,13 @@ function UserPage() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
+                      <div className="overflow-hidden rounded-2xl border border-primary/10 bg-muted/50">
+                        <img
+                          src={getListingImageSrc(listing)}
+                          alt={listing.title}
+                          className="h-40 w-full object-cover"
+                        />
+                      </div>
                       <div className="flex flex-wrap gap-2">
                         <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                           {listing.category}

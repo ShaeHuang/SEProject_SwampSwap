@@ -3,6 +3,7 @@ import type {
   Listing,
   ListingQueryParams,
 } from "@/types/listing";
+import { normalizeListing } from "@/lib/listing-images";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
 
@@ -34,17 +35,19 @@ export const isAuthenticated = () => Boolean(getToken());
 
 export const listListings = async (
   // Query params kept for future backend support
-  _params?: ListingQueryParams,
+  params?: ListingQueryParams,
 ): Promise<Listing[]> => {
+  void params;
   const response = await fetch(`${BASE_URL}/listings`);
 
-  return readJson<Listing[]>(response);
+  const listings = await readJson<Listing[]>(response);
+  return listings.map((listing) => normalizeListing(listing, BASE_URL));
 };
 
 export const getListingById = async (id: string): Promise<Listing> => {
   const response = await fetch(`${BASE_URL}/listings/${id}`);
 
-  return readJson<Listing>(response);
+  return normalizeListing(await readJson<Listing>(response), BASE_URL);
 };
 
 export const createListing = async (
@@ -59,7 +62,7 @@ export const createListing = async (
     body: JSON.stringify(data),
   });
 
-  return readJson<Listing>(response);
+  return normalizeListing(await readJson<Listing>(response), BASE_URL);
 };
 
 export const updateListing = async (
@@ -75,7 +78,7 @@ export const updateListing = async (
     body: JSON.stringify(data),
   });
 
-  return readJson<Listing>(response);
+  return normalizeListing(await readJson<Listing>(response), BASE_URL);
 };
 
 export const deleteListing = async (id: number): Promise<void> => {
@@ -102,7 +105,7 @@ export const buyListing = async (id: number): Promise<Listing> => {
     body: JSON.stringify({ status: "sold" }),
   });
 
-  return readJson<Listing>(response);
+  return normalizeListing(await readJson<Listing>(response), BASE_URL);
 };
 
 export const defaultListingSort = "latest" as const;

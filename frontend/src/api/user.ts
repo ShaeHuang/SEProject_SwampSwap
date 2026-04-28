@@ -4,16 +4,9 @@ import type {
   UpdateCurrentUserProfileData,
   UserInfo,
 } from "@/types/user";
+import { getApiOrigin, normalizeListing } from "@/lib/listing-images";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
-
-const getApiOrigin = () => {
-  try {
-    return new URL(BASE_URL).origin;
-  } catch {
-    return "http://localhost:8080";
-  }
-};
 
 const normalizeAvatarUrl = (avatar: string) => {
   if (!avatar) {
@@ -24,7 +17,7 @@ const normalizeAvatarUrl = (avatar: string) => {
     return avatar;
   }
 
-  const apiOrigin = getApiOrigin();
+  const apiOrigin = getApiOrigin(BASE_URL);
   const fileName = avatar.split("/").pop();
 
   if (avatar.startsWith("/files/")) {
@@ -111,7 +104,9 @@ export const getCurrentUserListings = async (): Promise<Listing[]> => {
     throw new Error(json.error ?? "Failed to fetch user listings");
   }
 
-  return json.data as Listing[];
+  return (json.data as Listing[]).map((listing) =>
+    normalizeListing(listing, BASE_URL),
+  );
 };
 
 export const updateCurrentUserProfile = async (
@@ -165,7 +160,7 @@ export const uploadCurrentUserAvatar = async (file: File): Promise<string> => {
   }
 
   if (typeof json.filename === "string" && json.filename.length > 0) {
-    return `${getApiOrigin()}/files/${json.filename}`;
+    return `${getApiOrigin(BASE_URL)}/files/${json.filename}`;
   }
 
   throw new Error("Avatar upload succeeded but no URL was returned");
