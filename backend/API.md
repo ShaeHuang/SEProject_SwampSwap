@@ -392,18 +392,19 @@ Creates a new listing. The listing is automatically assigned to the authenticate
 | price | number | Yes | Price in dollars |
 | category | string | Yes | Category of item |
 | condition | number | Yes | Item condition |
-| image | image | No | Image of item |
+| image | image | No | Image(s) of item |
 
 **Example Request:**
 ```json
 {
   "title": "Desk Lamp",
   "description": "LED lamp, barely used",
-  "price": 15.00
+  "price": 15.00,
+  "image": <lamp.png>
 }
 ```
 
-If an image is present, use ``multipart/form-data``, and configure it such that:
+If image(s) are present, use ``multipart/form-data``, and configure it such that:
 | Key | Type | Value |
 |-------|------|----------|
 | Title | text | \<your item title\> |
@@ -411,7 +412,7 @@ If an image is present, use ``multipart/form-data``, and configure it such that:
 | Price | text | \<your item price\> |
 | Category | text | \<your item category\> |
 | Condition | text | \<your item condition\> |
-| image | file | \<path to image file\> |
+| image | file | \<path(s) to image file(s)\> |
 
 **Success Response (201 Created):**
 ```json
@@ -425,11 +426,12 @@ If an image is present, use ``multipart/form-data``, and configure it such that:
   "price": 15.00,
   "user_id": 1,
   "status": "available",
-  "image": "listings\\20260413-204250-99754756f6387b69.jpg",
+  "image": "WyJsaXN0aW5nc1xcMjAyNjA0MjktMTczMzU5LWExMGU3NTUyMGFkNTNhMjQuanBnIl0=",
   "seller_name": "seller",
   "seller_avatar": "avatars\\20260413-202315-295fb5fc6d24974f.jpg"
 }
 ```
+To support multiple images, the paths are stored as bytes in the database which can be unmarshalled to get them back.
 
 **Error Response (401 Unauthorized):**
 ```json
@@ -462,16 +464,18 @@ Updates a listing. Only the owner of the listing can update it.
 | price | number | No | Updated price |
 | category | string | No | Updated category |
 | condition | number | No | Updated condition |
-| image | image | No | Updated image |
+| image | image | No | Updated image(s) |
 
 All fields are optional. Only include the fields you want to update.
+To support deleting images from listings, attaching no images to the call will remove the current image(s) from the listings. To keep the current listing image(s), you must upload them again.
 
 **Example Request:**
 ```json
 {
   "title": "Desk Lamp - Price Drop",
   "description": "LED lamp, barely used. Must go!",
-  "price": 10.00
+  "price": 10.00,
+  "image": <lamp.png>
 }
 ```
 
@@ -483,7 +487,7 @@ If an image is present, use ``multipart/form-data``, and configure it such that:
 | Price | text | \<your new item price\> |
 | Category | text | \<your new item category\> |
 | Condition | text | \<your new item condition\> |
-| image | file | \<new path to image file\> |
+| image | file | \<new path(s) to image file(s)\> |
 
 **Success Response (200 OK):**
 ```json
@@ -497,7 +501,7 @@ If an image is present, use ``multipart/form-data``, and configure it such that:
   "price": 10.00,
   "user_id": 1,
   "status": "available",
-  "image": "listings\\20260413-204250-99754756f6387b69.jpg",
+  "image": "WyJsaXN0aW5nc1xcMjAyNjA0MjktMTczMzU5LWExMGU3NTUyMGFkNTNhMjQuanBnIl0=",
   "seller_name": "seller",
   "seller_avatar": "avatars\\20260413-202315-295fb5fc6d24974f.jpg"
 }
@@ -582,6 +586,178 @@ Filters existing listings by a keyword, a minimum price, and/or a maximum price.
     "error": "Query error: no matches found."
 }
 ```
+---
+## Messaging
+
+### Get Conversations
+
+Returns a summary list of all users the authenticated user has exchanged messages with. Each entry represents one conversation, sorted by most recent activity first.
+
+**Endpoint:** `GET /api/messages`
+**Auth Required:** Yes
+
+**Success Response (200 OK):**
+```json
+[
+  {
+    "userId": "2",
+    "username": "alice",
+    "avatar": "avatars\\20260413-202315-295fb5fc6d24974f.jpg",
+    "lastMessage": "Yes, still available.",
+    "lastAt": "2026-04-01T12:00:00Z",
+    "unreadCount": 1
+  },
+  {
+    "userId": "5",
+    "username": "bob",
+    "avatar": "",
+    "lastMessage": "Tonight works for pickup.",
+    "lastAt": "2026-04-01T10:15:00Z",
+    "unreadCount": 0
+  }
+]
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| userId | string | The conversation partner's user ID |
+| username | string | Partner's display name |
+| avatar | string | Partner's avatar path (empty string if not set) |
+| lastMessage | string | Content of the most recent message in the thread |
+| lastAt | string | ISO 8601 timestamp of the most recent message |
+| unreadCount | number | Count of unread messages from the partner to the current user |
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+---
+
+### Get Thread With User
+
+Returns the full message history between the authenticated user and the specified partner, ordered chronologically. As a side effect, all unread messages **from the partner to the current user** are marked as read.
+
+**Endpoint:** `GET /api/messages/:userId`
+**Auth Required:** Yes
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| userId | string | The conversation partner's user ID |
+
+**Success Response (200 OK):**
+```json
+[
+  {
+    "id": "1",
+    "senderId": "1",
+    "receiverId": "2",
+    "content": "Hey, is this still available?",
+    "createdAt": "2026-04-01T11:55:00Z",
+    "isRead": true
+  },
+  {
+    "id": "2",
+    "senderId": "2",
+    "receiverId": "1",
+    "content": "Yes, still available.",
+    "createdAt": "2026-04-01T12:00:00Z",
+    "isRead": false
+  }
+]
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Message ID |
+| senderId | string | Sender's user ID |
+| receiverId | string | Receiver's user ID |
+| content | string | Message text |
+| createdAt | string | ISO 8601 timestamp of when the message was sent |
+| isRead | boolean | Whether the receiver has opened the thread since this message was sent |
+
+**Note:** The frontend uses this side effect to power read receipts. When the recipient calls this endpoint, the sender's unread messages flip to `isRead: true`. On the sender's next poll of the same thread, their messages will reflect the new read state.
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+---
+
+### Send Message
+
+Sends a new message to another user. The sender is automatically derived from the JWT token.
+
+**Endpoint:** `POST /api/messages`
+**Auth Required:** Yes
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| receiver_id | number | Yes | ID of the user receiving the message |
+| content | string | Yes | Message text (must be non-empty) |
+
+**Example Request:**
+```json
+{
+  "receiver_id": 2,
+  "content": "Hey, is this still available?"
+}
+```
+
+**Success Response (201 Created):**
+```json
+{
+  "id": "3",
+  "senderId": "1",
+  "receiverId": "2",
+  "content": "Hey, is this still available?",
+  "createdAt": "2026-04-01T12:05:00Z",
+  "isRead": false
+}
+```
+
+**Error Response (400 Bad Request):**
+
+Returned when `receiver_id` equals the sender's own ID, or when `content` is empty.
+
+```json
+{
+  "error": "Cannot send a message to yourself"
+}
+```
+
+**Error Response (404 Not Found):**
+
+Returned when the specified `receiver_id` does not match an existing user.
+
+```json
+{
+  "error": "Receiver not found"
+}
+```
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+**Note:** Field naming differs intentionally between request and response. Inputs use snake_case (`receiver_id`) to match Go binding tags; outputs use camelCase string IDs (`senderId`, `receiverId`) to match the frontend TypeScript types.
+
 
 ---
 
@@ -613,6 +789,19 @@ Filters existing listings by a keyword, a minimum price, and/or a maximum price.
 | Status | string | "available" (default) or "sold" |
 | UserID | uint | Foreign key to User who created the listing |
 
+
+---
+### Message
+
+| Field | Type | Description |
+|-------|------|-------------|
+| ID | uint | Auto-incremented primary key |
+| CreatedAt | timestamp | Send time |
+| UpdatedAt | timestamp | Last modification time |
+| SenderID | uint | Foreign key to User who sent the message |
+| ReceiverID | uint | Foreign key to User who receives the message |
+| Content | string | Message text |
+| IsRead | bool | True once the receiver has opened the thread containing this message |
 ---
 
 ## Error Handling
