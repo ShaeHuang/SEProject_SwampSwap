@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getConversationWithUser, getConversations, sendMessage } from "@/api/message";
@@ -16,24 +16,32 @@ function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState(searchParams.get("draft") ?? "");
   const [loading, setLoading] = useState(false);
+  const lastLoadedThreadUserIdRef = useRef<string | null>(null);
   const draftListingTitle = searchParams.get("listingTitle");
 
-  const loadConversations = useCallback(async () => {
+  const loadConversations = async () => {
     setLoading(true);
     const convos = await getConversations();
     setConversations(convos);
-    setSelectedUserId((currentUserId) => currentUserId || convos[0]?.userId || "");
+    if (!selectedUserId && convos.length > 0) {
+      setSelectedUserId(convos[0].userId);
+    }
     setLoading(false);
-  }, []);
+  };
 
-  const loadThread = useCallback(async (userId: string) => {
+  const loadThread = async (userId: string, options?: { force?: boolean }) => {
+    if (!options?.force && lastLoadedThreadUserIdRef.current === userId) {
+      return;
+    }
+
+    lastLoadedThreadUserIdRef.current = userId;
     setLoading(true);
     const user = await getUserInfo(userId).catch(() => null);
     setSelectedUserInfo(user);
     const thread = await getConversationWithUser(userId);
     setMessages(thread);
     setLoading(false);
-  }, []);
+  };
 
   const refreshCurrentConversation = async () => {
     const currentUserId = selectedUserId;
@@ -41,7 +49,7 @@ function ChatPage() {
     await loadConversations();
 
     if (currentUserId) {
-      await loadThread(currentUserId);
+      await loadThread(currentUserId, { force: true });
     }
   };
 
@@ -50,14 +58,13 @@ function ChatPage() {
       await loadConversations();
     };
     init();
-  }, [loadConversations]);
+  }, []);
 
   useEffect(() => {
     const nextUserId = searchParams.get("userId") ?? "";
     const nextDraft = searchParams.get("draft") ?? "";
 
     if (nextUserId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedUserId(nextUserId);
     }
 
@@ -70,7 +77,7 @@ function ChatPage() {
       await loadThread(selectedUserId);
     };
     updateThread();
-  }, [loadThread, selectedUserId]);
+  }, [selectedUserId]);
 
   const sortedConversations = useMemo(() => {
     const items = [...conversations];
@@ -97,9 +104,11 @@ function ChatPage() {
 
   const onSend = async () => {
     if (!selectedUserId || !newMessage.trim()) return;
-    await sendMessage(selectedUserId, newMessage.trim());
+
+    const sentMessage = await sendMessage(selectedUserId, newMessage.trim());
+
+    setMessages((currentMessages) => [...currentMessages, sentMessage]);
     setNewMessage("");
-    await loadThread(selectedUserId);
     await loadConversations();
   };
 
