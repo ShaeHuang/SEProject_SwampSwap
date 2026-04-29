@@ -785,6 +785,19 @@ Returned when the specified `receiver_id` does not match an existing user.
 | Status | string | "available" (default) or "sold" |
 | UserID | uint | Foreign key to User who created the listing |
 
+
+---
+### Message
+
+| Field | Type | Description |
+|-------|------|-------------|
+| ID | uint | Auto-incremented primary key |
+| CreatedAt | timestamp | Send time |
+| UpdatedAt | timestamp | Last modification time |
+| SenderID | uint | Foreign key to User who sent the message |
+| ReceiverID | uint | Foreign key to User who receives the message |
+| Content | string | Message text |
+| IsRead | bool | True once the receiver has opened the thread containing this message |
 ---
 
 ## Error Handling
