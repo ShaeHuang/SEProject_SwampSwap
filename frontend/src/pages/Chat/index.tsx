@@ -37,6 +37,16 @@ function ChatPage() {
     setLoading(false);
   };
 
+  const refreshCurrentConversation = async () => {
+    const currentUserId = selectedUserId;
+
+    await loadConversations();
+
+    if (currentUserId) {
+      await loadThread(currentUserId);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       await loadConversations();
@@ -131,7 +141,7 @@ function ChatPage() {
         <div className="rounded-lg border bg-card p-4 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Chat</h2>
-            <Button variant="outline" size="sm" onClick={loadConversations}>Refresh</Button>
+            <Button variant="outline" size="sm" onClick={refreshCurrentConversation}>Refresh</Button>
           </div>
           {selectedUserInfo ? (
             <div className="mb-3 flex items-center gap-3 border-b pb-3">
