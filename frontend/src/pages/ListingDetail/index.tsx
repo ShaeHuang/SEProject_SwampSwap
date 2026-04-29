@@ -190,11 +190,11 @@ function ListingDetailPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <section className="space-y-3">
-                <div className="overflow-hidden rounded-2xl border border-primary/10 bg-muted/50">
+                <div className="overflow-hidden rounded-2xl border border-primary/10 bg-background">
                   <img
                     src={getListingImageSrc(listing)}
                     alt={listing.title}
-                    className="h-80 w-full object-cover"
+                    className="h-80 w-full object-contain p-4"
                   />
                 </div>
                 {listing.imageUrls && listing.imageUrls.length > 1 && (
@@ -204,7 +204,7 @@ function ListingDetailPage() {
                         key={imageUrl}
                         src={imageUrl}
                         alt={`${listing.title} ${index + 1}`}
-                        className={`h-20 w-full rounded-lg border object-cover ${
+                        className={`h-20 w-full rounded-lg border bg-background object-contain p-1 ${
                           imageUrl === primaryImage
                             ? "border-primary"
                             : "border-primary/10"

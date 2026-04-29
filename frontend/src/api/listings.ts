@@ -31,6 +31,25 @@ const readJson = async <T>(response: Response): Promise<T> => {
   return json as T;
 };
 
+const hasListingImages = (data: CreateListingData) =>
+  Boolean(data.images && data.images.length > 0);
+
+const buildListingFormData = (data: CreateListingData) => {
+  const formData = new FormData();
+
+  formData.append("Title", data.title);
+  formData.append("Description", data.description);
+  formData.append("Price", String(data.price));
+  formData.append("Category", data.category);
+  formData.append("Condition", data.condition);
+
+  data.images?.forEach((image) => {
+    formData.append("image", image);
+  });
+
+  return formData;
+};
+
 export const isAuthenticated = () => Boolean(getToken());
 
 export const listListings = async (
@@ -53,13 +72,18 @@ export const getListingById = async (id: string): Promise<Listing> => {
 export const createListing = async (
   data: CreateListingData,
 ): Promise<Listing> => {
+  const hasImages = hasListingImages(data);
   const response = await fetch(`${BASE_URL}/listings`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeaders(),
-    },
-    body: JSON.stringify(data),
+    headers: hasImages
+      ? {
+          ...getAuthHeaders(),
+        }
+      : {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+    body: hasImages ? buildListingFormData(data) : JSON.stringify(data),
   });
 
   return normalizeListing(await readJson<Listing>(response), BASE_URL);
@@ -69,13 +93,18 @@ export const updateListing = async (
   id: number,
   data: CreateListingData,
 ): Promise<Listing> => {
+  const hasImages = hasListingImages(data);
   const response = await fetch(`${BASE_URL}/listings/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      ...getAuthHeaders(),
-    },
-    body: JSON.stringify(data),
+    headers: hasImages
+      ? {
+          ...getAuthHeaders(),
+        }
+      : {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+    body: hasImages ? buildListingFormData(data) : JSON.stringify(data),
   });
 
   return normalizeListing(await readJson<Listing>(response), BASE_URL);

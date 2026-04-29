@@ -57,4 +57,5 @@ export interface CreateListingData {
   price: number;
   category: ListingCategory;
   condition: ListingCondition;
+  images?: File[];
 }
