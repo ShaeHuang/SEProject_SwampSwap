@@ -392,18 +392,19 @@ Creates a new listing. The listing is automatically assigned to the authenticate
 | price | number | Yes | Price in dollars |
 | category | string | Yes | Category of item |
 | condition | number | Yes | Item condition |
-| image | image | No | Image of item |
+| image | image | No | Image(s) of item |
 
 **Example Request:**
 ```json
 {
   "title": "Desk Lamp",
   "description": "LED lamp, barely used",
-  "price": 15.00
+  "price": 15.00,
+  "image": <lamp.png>
 }
 ```
 
-If an image is present, use ``multipart/form-data``, and configure it such that:
+If image(s) are present, use ``multipart/form-data``, and configure it such that:
 | Key | Type | Value |
 |-------|------|----------|
 | Title | text | \<your item title\> |
@@ -411,7 +412,7 @@ If an image is present, use ``multipart/form-data``, and configure it such that:
 | Price | text | \<your item price\> |
 | Category | text | \<your item category\> |
 | Condition | text | \<your item condition\> |
-| image | file | \<path to image file\> |
+| image | file | \<path(s) to image file(s)\> |
 
 **Success Response (201 Created):**
 ```json
@@ -425,11 +426,12 @@ If an image is present, use ``multipart/form-data``, and configure it such that:
   "price": 15.00,
   "user_id": 1,
   "status": "available",
-  "image": "listings\\20260413-204250-99754756f6387b69.jpg",
+  "image": "WyJsaXN0aW5nc1xcMjAyNjA0MjktMTczMzU5LWExMGU3NTUyMGFkNTNhMjQuanBnIl0=",
   "seller_name": "seller",
   "seller_avatar": "avatars\\20260413-202315-295fb5fc6d24974f.jpg"
 }
 ```
+To support multiple images, the paths are stored as bytes in the database which can be unmarshalled to get them back.
 
 **Error Response (401 Unauthorized):**
 ```json
@@ -462,16 +464,18 @@ Updates a listing. Only the owner of the listing can update it.
 | price | number | No | Updated price |
 | category | string | No | Updated category |
 | condition | number | No | Updated condition |
-| image | image | No | Updated image |
+| image | image | No | Updated image(s) |
 
 All fields are optional. Only include the fields you want to update.
+To support deleting images from listings, attaching no images to the call will remove the current image(s) from the listings. To keep the current listing image(s), you must upload them again.
 
 **Example Request:**
 ```json
 {
   "title": "Desk Lamp - Price Drop",
   "description": "LED lamp, barely used. Must go!",
-  "price": 10.00
+  "price": 10.00,
+  "image": <lamp.png>
 }
 ```
 
@@ -483,7 +487,7 @@ If an image is present, use ``multipart/form-data``, and configure it such that:
 | Price | text | \<your new item price\> |
 | Category | text | \<your new item category\> |
 | Condition | text | \<your new item condition\> |
-| image | file | \<new path to image file\> |
+| image | file | \<new path(s) to image file(s)\> |
 
 **Success Response (200 OK):**
 ```json
@@ -497,7 +501,7 @@ If an image is present, use ``multipart/form-data``, and configure it such that:
   "price": 10.00,
   "user_id": 1,
   "status": "available",
-  "image": "listings\\20260413-204250-99754756f6387b69.jpg",
+  "image": "WyJsaXN0aW5nc1xcMjAyNjA0MjktMTczMzU5LWExMGU3NTUyMGFkNTNhMjQuanBnIl0=",
   "seller_name": "seller",
   "seller_avatar": "avatars\\20260413-202315-295fb5fc6d24974f.jpg"
 }
