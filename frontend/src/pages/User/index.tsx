@@ -52,6 +52,7 @@ type EditFormState = {
   price: string;
   category: string;
   condition: string;
+  images: File[];
 };
 
 const createEditForm = (listing: Listing): EditFormState => ({
@@ -60,6 +61,7 @@ const createEditForm = (listing: Listing): EditFormState => ({
   price: String(listing.price),
   category: listing.category,
   condition: listing.condition,
+  images: [],
 });
 
 function UserPage() {
@@ -72,6 +74,7 @@ function UserPage() {
     price: "",
     category: "",
     condition: "",
+    images: [] as File[],
   });
   const [profile, setProfile] = useState<CurrentUserProfile | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
@@ -171,6 +174,9 @@ function UserPage() {
       category: editForm.category as CreateListingData["category"],
       condition: editForm.condition as CreateListingData["condition"],
     };
+    if (editForm.images.length > 0) {
+      payload.images = editForm.images;
+    }
 
     try {
       setIsSaving(true);
@@ -237,6 +243,9 @@ function UserPage() {
       category: createForm.category as CreateListingData["category"],
       condition: createForm.condition as CreateListingData["condition"],
     };
+    if (createForm.images.length > 0) {
+      payload.images = createForm.images;
+    }
 
     try {
       setIsSubmitting(true);
@@ -248,6 +257,7 @@ function UserPage() {
         price: "",
         category: "",
         condition: "",
+        images: [],
       });
       setIsCreateOpen(false);
       toast.success("Your item is now live.");
@@ -639,6 +649,31 @@ function UserPage() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="edit-images">Replace photos</Label>
+                  <Input
+                    id="edit-images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(event) =>
+                      setEditForm((current) =>
+                        current
+                          ? {
+                              ...current,
+                              images: Array.from(event.target.files ?? []),
+                            }
+                          : current,
+                      )
+                    }
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {editForm.images.length > 0
+                      ? `${editForm.images.length} photo${editForm.images.length === 1 ? "" : "s"} selected`
+                      : "Leave empty to keep the current photos."}
+                  </p>
+                </div>
+
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={closeEditDialog}>
                     Cancel
@@ -745,6 +780,27 @@ function UserPage() {
                   }
                   placeholder="25"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sell-images">Photos</Label>
+                <Input
+                  id="sell-images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(event) =>
+                    setCreateForm((current) => ({
+                      ...current,
+                      images: Array.from(event.target.files ?? []),
+                    }))
+                  }
+                />
+                {createForm.images.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {createForm.images.length} photo
+                    {createForm.images.length === 1 ? "" : "s"} selected
+                  </p>
+                )}
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>

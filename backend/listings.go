@@ -227,13 +227,6 @@ func UpdateListing(c *gin.Context) {
 		}
 	}
 
-	var old_image_paths []string
-	_ = json.Unmarshal(listing.Image, &old_image_paths)
-	// Delete old images if they exist
-	for _, old_image_path := range old_image_paths {
-		os.Remove(old_image_path)
-	}
-
 	// Update fields
 	if input.Title != nil {
 		listing.Title = *input.Title
@@ -254,9 +247,13 @@ func UpdateListing(c *gin.Context) {
 		listing.Status = *input.Status
 	}
 	if input.Image != nil {
+		var old_image_paths []string
+		_ = json.Unmarshal(listing.Image, &old_image_paths)
+		// Delete old images only when replacement images were uploaded.
+		for _, old_image_path := range old_image_paths {
+			os.Remove(old_image_path)
+		}
 		listing.Image = *input.Image
-	} else {
-		listing.Image = nil
 	}
 
 	// Save to DB

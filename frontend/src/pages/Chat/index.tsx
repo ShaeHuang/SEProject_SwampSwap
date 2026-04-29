@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getConversationWithUser, getConversations, sendMessage } from "@/api/message";
@@ -18,24 +18,22 @@ function ChatPage() {
   const [loading, setLoading] = useState(false);
   const draftListingTitle = searchParams.get("listingTitle");
 
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     setLoading(true);
     const convos = await getConversations();
     setConversations(convos);
-    if (!selectedUserId && convos.length > 0) {
-      setSelectedUserId(convos[0].userId);
-    }
+    setSelectedUserId((currentUserId) => currentUserId || convos[0]?.userId || "");
     setLoading(false);
-  };
+  }, []);
 
-  const loadThread = async (userId: string) => {
+  const loadThread = useCallback(async (userId: string) => {
     setLoading(true);
     const user = await getUserInfo(userId).catch(() => null);
     setSelectedUserInfo(user);
     const thread = await getConversationWithUser(userId);
     setMessages(thread);
     setLoading(false);
-  };
+  }, []);
 
   const refreshCurrentConversation = async () => {
     const currentUserId = selectedUserId;
@@ -52,13 +50,14 @@ function ChatPage() {
       await loadConversations();
     };
     init();
-  }, []);
+  }, [loadConversations]);
 
   useEffect(() => {
     const nextUserId = searchParams.get("userId") ?? "";
     const nextDraft = searchParams.get("draft") ?? "";
 
     if (nextUserId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedUserId(nextUserId);
     }
 
@@ -71,7 +70,7 @@ function ChatPage() {
       await loadThread(selectedUserId);
     };
     updateThread();
-  }, [selectedUserId]);
+  }, [loadThread, selectedUserId]);
 
   const sortedConversations = useMemo(() => {
     const items = [...conversations];

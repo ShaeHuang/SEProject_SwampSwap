@@ -33,8 +33,8 @@ import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuList,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu-style";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useFavoriteListings } from "@/hooks/useFavoriteListings";
@@ -100,6 +100,7 @@ function ListingsPage() {
     price: "",
     category: "",
     condition: "",
+    images: [] as File[],
   });
   const { isFavorite, toggleFavorite } = useFavoriteListings();
 
@@ -259,6 +260,9 @@ function ListingsPage() {
       category: sellForm.category as ListingCategory,
       condition: sellForm.condition as ListingCondition,
     };
+    if (sellForm.images.length > 0) {
+      payload.images = sellForm.images;
+    }
 
     try {
       setIsSubmitting(true);
@@ -270,6 +274,7 @@ function ListingsPage() {
         price: "",
         category: "",
         condition: "",
+        images: [],
       });
       setIsSellOpen(false);
       toast.success("Your item is now live.");
@@ -573,6 +578,27 @@ function ListingsPage() {
                           }
                           placeholder="25"
                         />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="sell-images">Photos</Label>
+                        <Input
+                          id="sell-images"
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(event) =>
+                            setSellForm((current) => ({
+                              ...current,
+                              images: Array.from(event.target.files ?? []),
+                            }))
+                          }
+                        />
+                        {sellForm.images.length > 0 && (
+                          <p className="text-sm text-muted-foreground">
+                            {sellForm.images.length} photo
+                            {sellForm.images.length === 1 ? "" : "s"} selected
+                          </p>
+                        )}
                       </div>
                       <DialogFooter>
                         <Button type="submit" disabled={isSubmitting}>
