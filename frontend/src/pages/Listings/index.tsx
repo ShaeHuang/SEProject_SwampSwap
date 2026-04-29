@@ -772,11 +772,11 @@ function ListingsPage() {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-3 pt-0">
-                        <div className="overflow-hidden rounded-[1.5rem] border border-primary/10 bg-muted/50">
+                        <div className="overflow-hidden rounded-[1.5rem] border border-primary/10 bg-background">
                           <img
                             src={getListingImageSrc(listing)}
                             alt={listing.title}
-                            className="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                            className="h-44 w-full object-contain p-3 transition duration-300 group-hover:scale-[1.02]"
                           />
                         </div>
                         <div className="flex flex-wrap gap-2">

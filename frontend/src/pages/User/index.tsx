@@ -488,11 +488,11 @@ function UserPage() {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="overflow-hidden rounded-2xl border border-primary/10 bg-muted/50">
+                      <div className="overflow-hidden rounded-2xl border border-primary/10 bg-background">
                         <img
                           src={getListingImageSrc(listing)}
                           alt={listing.title}
-                          className="h-40 w-full object-cover"
+                          className="h-40 w-full object-contain p-3"
                         />
                       </div>
                       <div className="flex flex-wrap gap-2">

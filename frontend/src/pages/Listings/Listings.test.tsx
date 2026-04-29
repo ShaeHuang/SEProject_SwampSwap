@@ -400,6 +400,42 @@ describe("ListingsPage", () => {
     });
   });
 
+  it("submits selected photos when creating a listing", async () => {
+    vi.mocked(isAuthenticated).mockReturnValue(true);
+    vi.mocked(getCurrentUser).mockResolvedValue({ id: 1, username: "albert" });
+
+    const user = userEvent.setup();
+    const listingPhoto = new File(["lamp photo"], "lamp.jpg", {
+      type: "image/jpeg",
+    });
+    renderListings();
+
+    await waitForListings();
+
+    await user.click(screen.getByRole("button", { name: /sell an item/i }));
+    await user.type(screen.getByLabelText(/item title/i), "Desk lamp");
+    await user.selectOptions(screen.getByLabelText(/category/i), "Furniture");
+    await user.type(
+      screen.getByLabelText(/description/i),
+      "Solid lamp for late-night study sessions.",
+    );
+    await user.selectOptions(screen.getByLabelText(/condition/i), "Gently used");
+    await user.type(screen.getByLabelText(/price/i), "25");
+    await user.upload(screen.getByLabelText(/photos/i), listingPhoto);
+    await user.click(screen.getByRole("button", { name: /post listing/i }));
+
+    await waitFor(() => {
+      expect(createListing).toHaveBeenCalledWith({
+        title: "Desk lamp",
+        category: "Furniture",
+        description: "Solid lamp for late-night study sessions.",
+        condition: "Gently used",
+        price: 25,
+        images: [listingPhoto],
+      });
+    });
+  });
+
   it("renders View Details link for each listing", async () => {
     renderListings();
 

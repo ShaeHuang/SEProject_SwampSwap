@@ -37,11 +37,11 @@ const hasListingImages = (data: CreateListingData) =>
 const buildListingFormData = (data: CreateListingData) => {
   const formData = new FormData();
 
-  formData.append("title", data.title);
-  formData.append("description", data.description);
-  formData.append("price", String(data.price));
-  formData.append("category", data.category);
-  formData.append("condition", data.condition);
+  formData.append("Title", data.title);
+  formData.append("Description", data.description);
+  formData.append("Price", String(data.price));
+  formData.append("Category", data.category);
+  formData.append("Condition", data.condition);
 
   data.images?.forEach((image) => {
     formData.append("image", image);
