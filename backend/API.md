@@ -582,6 +582,178 @@ Filters existing listings by a keyword, a minimum price, and/or a maximum price.
     "error": "Query error: no matches found."
 }
 ```
+---
+## Messaging
+
+### Get Conversations
+
+Returns a summary list of all users the authenticated user has exchanged messages with. Each entry represents one conversation, sorted by most recent activity first.
+
+**Endpoint:** `GET /api/messages`
+**Auth Required:** Yes
+
+**Success Response (200 OK):**
+```json
+[
+  {
+    "userId": "2",
+    "username": "alice",
+    "avatar": "avatars\\20260413-202315-295fb5fc6d24974f.jpg",
+    "lastMessage": "Yes, still available.",
+    "lastAt": "2026-04-01T12:00:00Z",
+    "unreadCount": 1
+  },
+  {
+    "userId": "5",
+    "username": "bob",
+    "avatar": "",
+    "lastMessage": "Tonight works for pickup.",
+    "lastAt": "2026-04-01T10:15:00Z",
+    "unreadCount": 0
+  }
+]
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| userId | string | The conversation partner's user ID |
+| username | string | Partner's display name |
+| avatar | string | Partner's avatar path (empty string if not set) |
+| lastMessage | string | Content of the most recent message in the thread |
+| lastAt | string | ISO 8601 timestamp of the most recent message |
+| unreadCount | number | Count of unread messages from the partner to the current user |
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+---
+
+### Get Thread With User
+
+Returns the full message history between the authenticated user and the specified partner, ordered chronologically. As a side effect, all unread messages **from the partner to the current user** are marked as read.
+
+**Endpoint:** `GET /api/messages/:userId`
+**Auth Required:** Yes
+
+**Path Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| userId | string | The conversation partner's user ID |
+
+**Success Response (200 OK):**
+```json
+[
+  {
+    "id": "1",
+    "senderId": "1",
+    "receiverId": "2",
+    "content": "Hey, is this still available?",
+    "createdAt": "2026-04-01T11:55:00Z",
+    "isRead": true
+  },
+  {
+    "id": "2",
+    "senderId": "2",
+    "receiverId": "1",
+    "content": "Yes, still available.",
+    "createdAt": "2026-04-01T12:00:00Z",
+    "isRead": false
+  }
+]
+```
+
+**Response Fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Message ID |
+| senderId | string | Sender's user ID |
+| receiverId | string | Receiver's user ID |
+| content | string | Message text |
+| createdAt | string | ISO 8601 timestamp of when the message was sent |
+| isRead | boolean | Whether the receiver has opened the thread since this message was sent |
+
+**Note:** The frontend uses this side effect to power read receipts. When the recipient calls this endpoint, the sender's unread messages flip to `isRead: true`. On the sender's next poll of the same thread, their messages will reflect the new read state.
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+---
+
+### Send Message
+
+Sends a new message to another user. The sender is automatically derived from the JWT token.
+
+**Endpoint:** `POST /api/messages`
+**Auth Required:** Yes
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| receiver_id | number | Yes | ID of the user receiving the message |
+| content | string | Yes | Message text (must be non-empty) |
+
+**Example Request:**
+```json
+{
+  "receiver_id": 2,
+  "content": "Hey, is this still available?"
+}
+```
+
+**Success Response (201 Created):**
+```json
+{
+  "id": "3",
+  "senderId": "1",
+  "receiverId": "2",
+  "content": "Hey, is this still available?",
+  "createdAt": "2026-04-01T12:05:00Z",
+  "isRead": false
+}
+```
+
+**Error Response (400 Bad Request):**
+
+Returned when `receiver_id` equals the sender's own ID, or when `content` is empty.
+
+```json
+{
+  "error": "Cannot send a message to yourself"
+}
+```
+
+**Error Response (404 Not Found):**
+
+Returned when the specified `receiver_id` does not match an existing user.
+
+```json
+{
+  "error": "Receiver not found"
+}
+```
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+**Note:** Field naming differs intentionally between request and response. Inputs use snake_case (`receiver_id`) to match Go binding tags; outputs use camelCase string IDs (`senderId`, `receiverId`) to match the frontend TypeScript types.
+
 
 ---
 
