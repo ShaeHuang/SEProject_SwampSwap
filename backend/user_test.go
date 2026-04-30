@@ -726,7 +726,7 @@ func TestListingCategoryRoundTripImage(t *testing.T) {
 	}
 
 	_ = json.Unmarshal(fetched.Image, &images)
-	if len(images) == 0 {
+	if len(images) != 2 {
 		t.Fatalf("expected 2 images on the fetched listing, got %d", len(images))
 	}
 
