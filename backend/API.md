@@ -787,6 +787,7 @@ Returned when the specified `receiver_id` does not match an existing user.
 | Description | string | Item description |
 | Price | float64 | Price in dollars |
 | Status | string | "available" (default) or "sold" |
+| Image | []byte | Byte representation of image path(s) |
 | UserID | uint | Foreign key to User who created the listing |
 
 
