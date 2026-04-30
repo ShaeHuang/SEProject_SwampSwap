@@ -141,6 +141,62 @@ https://youtu.be/WXnlaw3i6ic
 
 ## Kabeer Latane (Backend)
 
+Kabeer Latane (Backend)
+Work Completed in Sprint 4
+
+Designed and implemented the messaging system end-to-end across the backend and frontend.
+Created the Message GORM model in backend/message.go with sender, receiver, content, and is_read fields, and added it to AutoMigrate in both main.go and the test setup.
+Built three new REST endpoints behind JWT authentication:
+
+GET /api/messages — returns the authenticated user's conversation list with partner username, avatar, last message preview, timestamp, and unread count, sorted by most recent activity.
+GET /api/messages/:userId — returns the full chronological thread between the current user and a specific partner. As a deliberate side effect, marks all unread messages from the partner as read, which powers read receipts on the frontend without a separate write call.
+POST /api/messages — sends a new message. Validates that the receiver exists and is not the sender; sender ID is always derived from the JWT, never from the request body, to prevent impersonation.
+
+
+Registered the new routes inside the protected group in main.go and the test router in user_test.go.
+Rewrote frontend/src/api/message.ts to replace mock data with real backend calls, keeping function signatures identical to the mock so the existing Chat page component required no changes.
+Handled the snake_case (receiver_id) request format vs. camelCase string ID response format cleanly across the API boundary, matching Go binding tags on input and TypeScript types on output.
+Added live polling to the Chat page: a 5-second interval re-fetches the active thread and conversation list silently in the background, so new messages and unread counts appear without requiring a manual refresh.
+Implemented read receipt UI: sender's own messages display "✓ Sent" by default and update to "✓✓ Read" once the recipient opens the thread, surfacing the backend's isRead flag visually. Combined with polling, this updates within five seconds of the recipient reading the message.
+Added an empty-state message in the conversation sidebar for users with no conversations yet.
+Added the messaging API documentation section to backend/API.md, including the three endpoints, the Message data model, and a note explaining the snake_case/camelCase boundary.
+Resolved a merge incident where backend/message.go was created locally but never staged before commit, breaking main for the team. Diagnosed via teammate's compile error, restored the file via a hotfix branch by checking it out from the original feature branch.
+
+PR / Branch
+
+fix/messaging-bug — initial backend messaging implementation
+fix/restore-message-go — hotfix to restore the missing message.go file on main
+feat/chat-improvements — frontend API rewrite, live polling, read receipts, empty state, Cypress E2E tests
+doc/api.md-fix — backend API documentation for the messaging endpoints
+
+Backend Tests (Go Unit Tests)
+The backend messaging functionality is covered by four Go unit tests in backend/message_test.go, runnable via go test . in the backend folder alongside the existing test suite.
+Test Scenarios Covered
+
+TestSendAndGetMessages — Registers two users (alice and bob), sends a message from alice to bob via POST /api/messages, then fetches the thread via GET /api/messages/:userId. Verifies the send returns 201 with the content echoed back, and the thread fetch returns the message correctly.
+TestGetConversations — After alice sends a message to bob, calls GET /api/messages as alice. Verifies the conversation list returns exactly one entry with bob's username as the partner.
+TestSendMessageToSelf — Attempts to send a message where receiver_id equals the sender's own ID. Verifies the endpoint rejects the request with a 400 status code.
+TestSendMessageToNonexistentUser — Attempts to send a message to a user ID that does not exist in the database. Verifies the endpoint returns a 404 status code.
+
+Frontend Tests (Cypress E2E)
+Five Cypress end-to-end tests covering the messaging UI flow against the live frontend with mocked backend responses, following the same conventions as the existing listings.cy.ts.
+How to run
+
+Start frontend dev server: cd frontend && npm run dev
+Run the messaging spec: cd frontend && npx cypress run --spec cypress/e2e/messaging.cy.ts
+
+Test File
+
+frontend/cypress/e2e/messaging.cy.ts
+
+Test Scenarios Covered
+
+Empty state when the user has no conversations — Mocks GET /api/messages to return an empty array. Verifies the sidebar displays "No conversations yet. Message a seller to start one." and the chat panel shows "Select conversation to load messages."
+Conversation list rendering with unread badge — Mocks the conversations endpoint to return one partner with unreadCount: 1. Verifies the partner's username and last message preview are visible, and the red unread badge displays the correct count.
+Read receipt display on sent messages — Mocks the thread endpoint to return a sent message with isRead: true. Verifies the "✓✓ Read" indicator appears next to the sender's own message, confirming the read receipt UI surfaces the backend's is_read flag correctly.
+Send flow with payload validation — Mocks the POST /api/messages endpoint and verifies the frontend sends the correct payload shape: receiver_id as a number (snake_case) and content as a string. This guards the contract between the TypeScript frontend and the Go backend.
+Buy Now URL handoff from listing detail — Visits /chat with userId, listingTitle, and draft query parameters mimicking the URL produced by clicking "Buy Now" on a listing detail page. Verifies the message input is pre-filled with the draft and the listing title is shown in the conversation header.
+
 
 
 ---
