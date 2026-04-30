@@ -467,7 +467,6 @@ Updates a listing. Only the owner of the listing can update it.
 | image | image | No | Updated image(s) |
 
 All fields are optional. Only include the fields you want to update.
-To support deleting images from listings, attaching no images to the call will remove the current image(s) from the listings. To keep the current listing image(s), you must upload them again.
 
 **Example Request:**
 ```json
